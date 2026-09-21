@@ -1,0 +1,176 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Samarateja Reddy Gutta — portfolio
+   Colour carries meaning here: the page is monochrome, and the one warm
+   colour appears only where something fails. That is the whole thesis of
+   the work, so it should not be spent on decoration.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root{
+  --bg:#08080B;
+  --bg-lift:#0E0E13;
+  --text:#EDEDF0;
+  --muted:#8A8A96;
+  --faint:#55555F;
+  --line:rgba(237,237,240,0.10);
+  --line-strong:rgba(237,237,240,0.22);
+  --signal:#FF6B4A;          /* failure, and nothing else */
+  --gutter:clamp(20px,5vw,72px);
+  --maxw:1240px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:"Instrument Sans",system-ui,sans-serif;
+  font-size:clamp(15px,1.02vw,17.5px);line-height:1.62;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--text);color:var(--bg)}
+
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:0.72em;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--faint)}
+
+/* ── the scene sits behind everything ─────────────────────────────────── */
+#scene{
+  position:fixed;inset:0;width:100%;height:100%;   /* explicit: a canvas is a
+    replaced element, so inset alone resolves to its intrinsic buffer size */
+  z-index:0;pointer-events:none;opacity:0;transition:opacity 1.6s ease;
+}
+#scene.on{opacity:1}
+.shell{position:relative;z-index:2}
+
+/* ── loader ───────────────────────────────────────────────────────────── */
+#loader{position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;align-items:flex-end;justify-content:space-between;
+  padding:var(--gutter);transition:opacity .7s ease,visibility .7s}
+#loader.done{opacity:0;visibility:hidden}
+#loader .who{font-family:"Instrument Serif",serif;font-size:clamp(28px,4vw,52px);line-height:1}
+#loader .pct{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--faint)}
+#bar{position:fixed;left:0;bottom:0;height:1px;background:var(--text);width:0;z-index:101;transition:width .3s ease}
+#loader.done ~ #bar{opacity:0}
+
+/* ── chrome ───────────────────────────────────────────────────────────── */
+header.top{position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:22px var(--gutter);mix-blend-mode:difference}
+header.top .sig{font-family:"Instrument Serif",serif;font-size:19px;letter-spacing:.01em}
+header.top nav{display:flex;gap:26px}
+header.top nav a{font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  letter-spacing:.09em;text-transform:uppercase;opacity:.75;transition:opacity .2s}
+header.top nav a:hover{opacity:1}
+@media(max-width:760px){header.top nav{display:none}}
+
+/* ── generic section frame ────────────────────────────────────────────── */
+.band{padding:clamp(80px,12vh,150px) var(--gutter);max-width:var(--maxw);margin:0 auto;width:100%}
+.band-head{display:flex;gap:18px;align-items:baseline;margin-bottom:clamp(28px,4vw,52px);
+  border-top:1px solid var(--line);padding-top:16px}
+.band-head .n{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);letter-spacing:.1em}
+.band-head h2{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+.hero{min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+  padding:0 var(--gutter);max-width:var(--maxw);margin:0 auto;width:100%}
+.hero .kicker{margin-bottom:26px}
+.hero h1{font-family:"Instrument Serif",serif;font-weight:400;
+  font-size:clamp(46px,8.4vw,124px);line-height:0.94;letter-spacing:-0.02em;margin-bottom:34px}
+.hero h1 em{font-style:italic}
+.hero .thesis{max-width:34em;color:var(--muted);font-size:clamp(16px,1.25vw,20px);line-height:1.55}
+.hero .thesis b{color:var(--text);font-weight:500}
+.hero .foot{margin-top:clamp(34px,6vh,64px);display:flex;gap:30px;flex-wrap:wrap;align-items:center}
+.hero .foot a{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.06em;
+  border-bottom:1px solid var(--line-strong);padding-bottom:3px;transition:border-color .25s,color .25s}
+.hero .foot a:hover{border-color:var(--text)}
+.scroll-hint{position:absolute;bottom:26px;left:var(--gutter);font-family:"IBM Plex Mono",monospace;
+  font-size:11px;color:var(--faint);letter-spacing:.1em}
+
+/* ── station: one flagship project, with its own beat in the scene ────── */
+.station{min-height:150svh;position:relative;display:flex;align-items:center;
+  padding:0 var(--gutter);max-width:var(--maxw);margin:0 auto;width:100%}
+.station .panel{width:min(560px,100%);margin-left:auto;   /* text right, scene left */
+  background:linear-gradient(180deg,rgba(8,8,11,.86),rgba(8,8,11,.7));
+  backdrop-filter:blur(3px);border:1px solid var(--line);padding:clamp(26px,3vw,40px)}
+.station:nth-child(even) .panel{margin-left:0;margin-right:auto}
+.station .idx{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--signal);
+  letter-spacing:.1em;margin-bottom:16px;display:block}
+.station h3{font-family:"Instrument Serif",serif;font-weight:400;
+  font-size:clamp(28px,3.4vw,46px);line-height:1.05;margin-bottom:8px;letter-spacing:-0.01em}
+.station .sub{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px}
+.station p{color:var(--muted);margin-bottom:16px}
+.station p b{color:var(--text);font-weight:500}
+.station .pull{border-left:1px solid var(--signal);padding-left:16px;margin:22px 0;
+  color:var(--text);font-size:0.97em}
+.tags{display:flex;flex-wrap:wrap;gap:7px;margin:22px 0 20px}
+.tags span{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.05em;
+  color:var(--faint);border:1px solid var(--line);padding:4px 9px;border-radius:2px}
+.links{display:flex;gap:20px;flex-wrap:wrap}
+.links a{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.06em;
+  border-bottom:1px solid var(--line-strong);padding-bottom:2px;transition:border-color .2s}
+.links a:hover{border-color:var(--text)}
+.links .none{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint)}
+
+/* ── secondary work grid ──────────────────────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line)}
+.grid article{background:var(--bg);padding:clamp(24px,2.6vw,36px);transition:background .3s}
+.grid article:hover{background:var(--bg-lift)}
+.grid h4{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(21px,2vw,27px);
+  margin-bottom:6px;line-height:1.1}
+.grid .sub{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+.grid p{color:var(--muted);font-size:0.94em;margin-bottom:18px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+
+/* ── minor list ───────────────────────────────────────────────────────── */
+.list{border-top:1px solid var(--line)}
+.list .row{display:grid;grid-template-columns:minmax(150px,.75fr) 2fr auto;gap:22px;
+  align-items:baseline;padding:16px 0;border-bottom:1px solid var(--line)}
+.list .row .nm{font-family:"Instrument Serif",serif;font-size:1.12em}
+.list .row .wt{color:var(--muted);font-size:.92em}
+.list .row .lk{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);white-space:nowrap}
+.list .row .lk a{margin-left:14px}
+.list .row .lk a:hover{color:var(--text)}
+@media(max-width:760px){.list .row{grid-template-columns:1fr;gap:6px}.list .row .lk a{margin:0 16px 0 0}}
+
+/* ── experience / education ───────────────────────────────────────────── */
+.entry{display:grid;grid-template-columns:200px 1fr;gap:28px;padding:26px 0;border-bottom:1px solid var(--line)}
+.entry .when{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);letter-spacing:.06em}
+.entry .role{font-family:"Instrument Serif",serif;font-size:1.35em;margin-bottom:2px}
+.entry .org{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px}
+.entry p{color:var(--muted);font-size:.95em}
+@media(max-width:760px){.entry{grid-template-columns:1fr;gap:10px}}
+
+/* ── contact ──────────────────────────────────────────────────────────── */
+.contact{padding:clamp(90px,16vh,190px) var(--gutter);max-width:var(--maxw);margin:0 auto}
+.contact h2{font-family:"Instrument Serif",serif;font-weight:400;
+  font-size:clamp(38px,6.6vw,92px);line-height:1;letter-spacing:-0.02em;margin-bottom:28px}
+.contact h2 em{font-style:italic}
+.contact p{max-width:30em;color:var(--muted);margin-bottom:34px}
+.contact .ways{display:flex;gap:30px;flex-wrap:wrap}
+.contact .ways a{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.05em;
+  border-bottom:1px solid var(--line-strong);padding-bottom:4px;transition:border-color .25s}
+.contact .ways a:hover{border-color:var(--text)}
+footer{padding:26px var(--gutter);border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);letter-spacing:.06em}
+
+/* ── reveal ───────────────────────────────────────────────────────────── */
+html.js .up{opacity:0;transform:translateY(18px)}
+.up{transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+html.js .up.in{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  html.js .up{opacity:1;transform:none}
+  #scene{display:none}
+  .station{min-height:auto;padding-top:60px;padding-bottom:60px}
+}
+@media(max-width:860px){
+  #scene{display:none}
+  .station{min-height:auto;padding-top:54px;padding-bottom:54px}
+  .station .panel{width:100%;background:none;border:none;padding:0;backdrop-filter:none;
+    border-top:1px solid var(--line);padding-top:26px}
+}
