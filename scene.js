@@ -370,7 +370,7 @@ async function build() {
   const curLook = anchors[0].l.clone();
   const tmpP = new THREE.Vector3(), tmpL = new THREE.Vector3();
   const clock = new THREE.Clock();
-  let started = false;
+  let started = false, intro = 0;
 
   function progress() {
     const y = scrollY;
@@ -387,7 +387,20 @@ async function build() {
   function frame() {
     requestAnimationFrame(frame);
     const dt = Math.min(clock.getDelta(), 0.05);
-    if (document.hidden) return;
+
+    // The scene has an ending. Past the last station it fades out over roughly
+    // a screen and stops rendering entirely — everything below is opaque
+    // content, so a camera parked behind it is pure cost.
+    const last = focuses[focuses.length - 1];
+    const exit = Math.max(0, Math.min(1, 1 - (scrollY - last) / (innerHeight * 0.9)));
+    intro = Math.min(1, intro + dt / 1.2);
+    canvas.style.opacity = (exit * intro).toFixed(3);
+    if (exit < 0.02) return;
+
+    // Skip the work while hidden — but never before the first frame, or a page
+    // opened in a background tab would never initialise the scene at all and
+    // the loader's scene step would never settle.
+    if (document.hidden && started) return;
 
     const t = progress();
     const i = Math.min(anchors.length - 2, Math.floor(t));

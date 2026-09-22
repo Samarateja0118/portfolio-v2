@@ -36,9 +36,9 @@ a{color:inherit;text-decoration:none}
 #scene{
   position:fixed;inset:0;width:100%;height:100%;   /* explicit: a canvas is a
     replaced element, so inset alone resolves to its intrinsic buffer size */
-  z-index:0;pointer-events:none;opacity:0;transition:opacity 1.6s ease;
+  z-index:0;pointer-events:none;opacity:0;   /* faded by the scene itself, per
+    frame, so a CSS transition here would fight it */
 }
-#scene.on{opacity:1}
 .shell{position:relative;z-index:2}
 
 /* ── loader ───────────────────────────────────────────────────────────── */
@@ -87,7 +87,7 @@ header.top nav a:hover{opacity:1}
   font-size:11px;color:var(--faint);letter-spacing:.1em}
 
 /* ── station: one flagship project, with its own beat in the scene ────── */
-.station{min-height:150svh;position:relative;display:flex;align-items:center;
+.station{min-height:118svh;position:relative;display:flex;align-items:center;
   padding:0 var(--gutter);max-width:var(--maxw);margin:0 auto;width:100%}
 .station .panel{width:min(560px,100%);margin-left:auto;   /* text right, scene left */
   background:linear-gradient(180deg,rgba(8,8,11,.86),rgba(8,8,11,.7));
@@ -125,10 +125,10 @@ header.top nav a:hover{opacity:1}
 
 /* ── minor list ───────────────────────────────────────────────────────── */
 .list{border-top:1px solid var(--line)}
-.list .row{display:grid;grid-template-columns:minmax(150px,.75fr) 2fr auto;gap:22px;
+.list .row{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(0,1.5fr) auto;gap:22px;
   align-items:baseline;padding:16px 0;border-bottom:1px solid var(--line)}
 .list .row .nm{font-family:"Instrument Serif",serif;font-size:1.12em}
-.list .row .wt{color:var(--muted);font-size:.92em}
+.list .row .wt{color:var(--muted);font-size:.92em;max-width:62ch}
 .list .row .lk{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);white-space:nowrap}
 .list .row .lk a{margin-left:14px}
 .list .row .lk a:hover{color:var(--text)}
