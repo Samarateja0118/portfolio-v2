@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
 <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
@@ -164,55 +164,111 @@
 <div class="band" id="more">
   <div class="band-head up"><span class="n">02</span><h2>Also shipped</h2></div>
   <div class="grid up">
-    <article>
-      <h4>TradeWatch</h4>
-      <div class="sub">India–US policy monitor · Live</div>
-      <p>A daily briefing agent over the Federal Register, USTR, Commerce and PIB
-        feeds. A deterministic prefilter requiring two <em>distinct</em> trade or
-        tech concepts drops routine notices at zero marginal cost; survivors go to
-        a model. Every stage degrades instead of failing — and a response the
-        parser cannot read is deliberately exempted from the relevance threshold,
-        because the documents a model fails on are exactly the ones a human should
-        still see. 27 tests, no network.</p>
-      <div class="links">
-        <a href="https://tradewatch-hazel.vercel.app" target="_blank" rel="noopener">Live →</a>
-        <a href="https://github.com/Samarateja0118/tradewatch" target="_blank" rel="noopener">Code →</a>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-trade">
+        <h4>TradeWatch</h4>
+        <div class="sub">India–US policy monitor · Live</div>
+        <p>A daily briefing agent over the Federal Register, USTR, Commerce and PIB feeds. A deterministic prefilter requiring two <em>distinct</em> trade or tech concepts drops routine notices at zero marginal cost; survivors go to a model.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-trade">
+        <div class="detail-inner">
+          <p>The real design problem is that a language model is an unreliable
+            component inside a pipeline that has to be dependable, so every stage
+            degrades instead of failing. Malformed API records are skipped. A source
+            returning HTML instead of JSON costs only that request.</p>
+          <p>And a response the parser cannot read is <b>deliberately exempted from the
+            relevance threshold</b> — because the documents a model fails to answer on
+            are exactly the ones a human should still see.</p>
+          <p>Three layers with a hard seam between each: the pipeline, a thin FastAPI
+            layer over the same SQLite file, and a React dashboard. The middle layer is
+            opened <b>read-only</b>, so the site cannot write to the pipeline's data even
+            by accident.</p>
+          <p class="fine">27 tests, no network — fixtures and a deterministic fake LLM throughout.</p>
+        </div>
       </div>
+      <div class="links"><a href="https://tradewatch-hazel.vercel.app" target="_blank" rel="noopener">Live →</a><a href="https://github.com/Samarateja0118/tradewatch" target="_blank" rel="noopener">Code →</a></div>
     </article>
-    <article>
-      <h4>Rural Development Transparency</h4>
-      <div class="sub">MGNREGA · Data engineering · In progress</div>
-      <p>India's public-works disclosures turned auditable — district to block to
-        gram panchayat, every response archived and hashed so any number walks
-        back to its page. Reports carry internal arithmetic identities and a parse
-        failing one is <em>rejected</em>, not warned about. Identities are scoped
-        per report: the layout that validates the block report fails on all 31
-        rows of the state page. Entity resolution sends ambiguity to a review
-        queue rather than guessing.</p>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-mgnrega">
+        <h4>Rural Development Transparency</h4>
+        <div class="sub">MGNREGA · Data engineering · In progress</div>
+        <p>India's public-works disclosures turned auditable — district to block to gram panchayat, every response archived and hashed so any number walks back to its page.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-mgnrega">
+        <div class="detail-inner">
+          <p><b>Fetching.</b> Rate limited to six requests a minute per host, with retry
+            and backoff, and every raw response archived beside its SHA-256. The source
+            allow-list is enforced by a <b>database trigger at write time</b>, so a
+            non-government source cannot be quietly wired in later.</p>
+          <p><b>Validation rejects rather than warns.</b> A parse failing an identity never
+            reaches the database: <span class="mono-in">col17 = col10+col11+col12+col13+col16</span>
+            on GP rows, Grand Total equal to the sum of Sub Totals, and block
+            Unskilled-Wage lakhs × 1e5 equal to the GP total. Identities are scoped
+            <em>per report</em> — the layout that validates the block report fails on all
+            31 rows of the wider state page, so applying them blindly across levels would
+            have quietly corrupted every total.</p>
+          <p><b>Resolution refuses to guess.</b> Gram panchayat to village to subdistrict to
+            district, at full coverage. A match at or above 0.90 with no close runner-up is
+            automatic; 0.75–0.90 and anything ambiguous goes to a review queue. Nothing is
+            silently dropped or silently accepted.</p>
+          <p><b>What the build turned up:</b> prior-year liabilities are a separate category,
+            and folding them into current-year spend overstates the year. Compound work-type
+            codes like <span class="mono-in">LD/GIS</span> break a strict two-letter pattern,
+            which dropped five of 78 works and cross-contaminated GP totals.
+            <span class="mono-in">data.gov.in</span> rejects the default python-requests
+            user agent. And asking it for everything at once truncates near 1.65 MB while
+            still returning HTTP 200 with malformed JSON.</p>
+          <p class="fine">The MGNREGA portal returns a whole-host 401 to non-Indian IPs; live mode
+            detects that and exits with an actionable message rather than burning the retry budget.</p>
+        </div>
+      </div>
       <div class="links"><span class="none">Unpublished — private working repo</span></div>
     </article>
-    <article>
-      <h4>Movie Catalog Service</h4>
-      <div class="sub">MCP + HTTP · Async Python</div>
-      <p>One domain layer behind two independent transports — an MCP server for
-        assistants and an HTTP API for the demo — so caching, retries and failure
-        behaviour are identical whichever door a caller comes through.
-        Dependencies point one way: the domain knows nothing about HTTP, the
-        transport knows nothing about movies. Connection pooling, circuit
-        breaking, response caching.</p>
-      <div class="links">
-        <a href="https://movie-finder-demo.vercel.app/" target="_blank" rel="noopener">Live →</a>
-        <a href="https://github.com/Samarateja0118/movie-mcp-server" target="_blank" rel="noopener">Code →</a>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-movie">
+        <h4>Movie Catalog Service</h4>
+        <div class="sub">MCP + HTTP · Async Python</div>
+        <p>One domain layer behind two independent transports — an MCP server for assistants and an HTTP API for the demo — so caching, retries and failure behaviour are identical whichever door a caller comes through.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-movie">
+        <div class="detail-inner">
+          <p>Dependencies point one way only: the domain layer knows nothing about HTTP,
+            and the transport layer knows nothing about movies. That is what makes the two
+            front doors cheap — a second transport is a new adapter, not a second copy of
+            the rules.</p>
+          <p>Resilience is in the domain layer rather than bolted onto each transport:
+            connection pooling, retries, a circuit breaker so a failing upstream fails fast
+            instead of queueing, response caching, and where-to-watch availability on top of
+            the TMDB catalog.</p>
+        </div>
       </div>
+      <div class="links"><a href="https://movie-finder-demo.vercel.app/" target="_blank" rel="noopener">Live →</a><a href="https://github.com/Samarateja0118/movie-mcp-server" target="_blank" rel="noopener">Code →</a></div>
     </article>
-    <article>
-      <h4>CAP Sleep Microstructure</h4>
-      <div class="sub">ML research · EEG · In progress</div>
-      <p>Detecting cyclic alternating pattern phases in overnight EEG — the
-        microstructure beneath conventional sleep staging, which shifts in
-        conditions where a standard hypnogram still looks normal. Read from EDF
-        with MNE, windowed, and classified with tf.keras, with SHAP used to check
-        the model is reading physiology rather than an artefact.</p>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-cap">
+        <h4>CAP Sleep Microstructure</h4>
+        <div class="sub">ML research · EEG · In progress</div>
+        <p>Detecting cyclic alternating pattern phases in overnight EEG — the microstructure beneath conventional sleep staging, which shifts in conditions where a standard hypnogram still looks normal.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-cap">
+        <div class="detail-inner">
+          <p>Recordings are read from EDF with MNE, windowed, and turned into spectral and
+            entropy features feeding an LSTM over sequence windows — so the temporal context
+            around a candidate phase is available, rather than each window being judged
+            alone.</p>
+          <p><b>The evaluation is the interesting part.</b> The target class is 3.6% of
+            178,000 epochs, so predicting "background" every time scores <b>89.5%</b> while
+            learning nothing at all.</p>
+          <p>Reported per-class rather than as accuracy, the current model is <b>below that
+            baseline</b> — real recall on one phase, poor precision on all of them. It is
+            written up that way on purpose, along with a possible train/test leak still to
+            rule out and a clinical cohort too small to quote.</p>
+        </div>
+      </div>
       <div class="links"><a href="https://github.com/Samarateja0118/sleep-deprivation-project" target="_blank" rel="noopener">Code →</a></div>
     </article>
   </div>
@@ -299,6 +355,6 @@
 
 </div><!-- /shell -->
 
-<script type="module" src="scene.js?v=3"></script>
+<script type="module" src="scene.js?v=4"></script>
 </body>
 </html>

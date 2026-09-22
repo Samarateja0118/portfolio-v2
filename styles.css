@@ -123,6 +123,34 @@ header.top nav a:hover{opacity:1}
 .grid p{color:var(--muted);font-size:0.94em;margin-bottom:18px}
 @media(max-width:760px){.grid{grid-template-columns:1fr}}
 
+/* Expandable cards. The detail is in the markup expanded; JS collapses it on
+   load, so with no JS every word is still on the page. */
+.card-head{all:unset;display:block;width:100%;cursor:pointer;box-sizing:border-box}
+.card-head:focus-visible{outline:1px solid var(--line-strong);outline-offset:6px}
+.grid article:has(.card-head:hover){background:var(--bg-lift)}
+.cue{display:inline-flex;align-items:center;gap:9px;margin-top:2px;
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint);transition:color .2s}
+.card-head:hover .cue{color:var(--text)}
+.cue i{position:relative;width:9px;height:9px;flex:none}
+.cue i::before,.cue i::after{content:"";position:absolute;background:currentColor;
+  transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.cue i::before{left:0;top:4px;width:9px;height:1px}
+.cue i::after{left:4px;top:0;width:1px;height:9px}
+.card.open .cue i::after{transform:scaleY(0)}
+.card.open .cue{color:var(--text)}
+
+html.js .detail{display:grid;grid-template-rows:0fr;opacity:0;
+  transition:grid-template-rows .45s cubic-bezier(.2,.7,.2,1),opacity .3s ease}
+html.js .card.open .detail{grid-template-rows:1fr;opacity:1}
+.detail-inner{overflow:hidden}
+.detail-inner p{color:var(--muted);font-size:.93em;margin-bottom:14px}
+.detail-inner p:first-child{padding-top:18px;border-top:1px solid var(--line)}
+.detail-inner p b{color:var(--text);font-weight:500}
+.detail-inner .fine{font-size:.86em;color:var(--faint)}
+.mono-in{font-family:"IBM Plex Mono",monospace;font-size:.86em;color:var(--text)}
+@media(prefers-reduced-motion:reduce){html.js .detail{transition:none}}
+
 /* ── minor list ───────────────────────────────────────────────────────── */
 .list{border-top:1px solid var(--line)}
 .list .row{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(0,1.5fr) auto;gap:22px;

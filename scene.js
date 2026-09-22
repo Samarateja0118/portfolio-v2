@@ -22,6 +22,17 @@ const io = new IntersectionObserver((entries) => {
 }, { rootMargin: '0px 0px -12% 0px' });
 document.querySelectorAll('.up').forEach(el => io.observe(el));
 
+// Expandable project cards. The markup ships expanded so the content exists
+// without JS; collapsing is the enhancement, not the content.
+document.querySelectorAll('[data-card]').forEach((card) => {
+  const btn = card.querySelector('.card-head');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const open = card.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+});
+
 const loader = document.getElementById('loader');
 const pctEl  = document.getElementById('pct');
 const barEl  = document.getElementById('bar');
