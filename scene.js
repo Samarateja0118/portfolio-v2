@@ -34,19 +34,33 @@ document.querySelectorAll('.up').forEach(el => io.observe(el));
 
   const dlg = document.createElement('dialog');
   dlg.className = 'card-modal';
+  // Persistent, empty until a card is open. The title lives here instead of
+  // being cloned, so there is exactly one h4 for the card at all times — one
+  // accessible name, one focus target — whether it's sitting in the grid or
+  // floating above the open card.
+  const titleWrap = document.createElement('div');
+  titleWrap.className = 'modal-title';
+  dlg.appendChild(titleWrap);
   document.body.appendChild(dlg);
 
   let current = null, slot = null;
 
   const close = () => {
     if (!current) return;
+    const head = current.querySelector('.card-head');
+    // Move the title back to the front of the card's own head, restoring the
+    // original h4, .sub, p, .cue order.
+    const h4 = titleWrap.querySelector('h4');
+    const sub = titleWrap.querySelector('.sub');
+    h4.removeAttribute('tabindex');             // was only ever a modal focus target
+    head.insertBefore(sub, head.firstChild);
+    head.insertBefore(h4, head.firstChild);
     current.classList.remove('open');
-    current.querySelector('.card-head').setAttribute('aria-expanded', 'false');
+    head.setAttribute('aria-expanded', 'false');
     slot.replaceWith(current);                 // back into its own grid cell
-    const btn = current.querySelector('.card-head');
     current = null; slot = null;
     if (dlg.open) dlg.close();
-    btn.focus();                               // never strand the caret
+    head.focus();                               // never strand the caret
   };
 
   const open = (card) => {
@@ -56,17 +70,25 @@ document.querySelectorAll('.up').forEach(el => io.observe(el));
     slot.className = 'card-slot';
     slot.style.height = r.height + 'px';       // hold the space exactly
     card.replaceWith(slot);
+
+    // Lift the title out of the card's head and into its own slot above the
+    // card, rather than leaving that space blank above the dialog.
+    const head = card.querySelector('.card-head');
+    const heading = head.querySelector('h4');
+    const sub = head.querySelector('.sub');
+    titleWrap.appendChild(heading);
+    titleWrap.appendChild(sub);
+
     dlg.appendChild(card);
     card.classList.add('open');
-    card.querySelector('.card-head').setAttribute('aria-expanded', 'true');
+    head.setAttribute('aria-expanded', 'true');
     current = card;
     dlg.showModal();
     // showModal()'s default focus target landed on the (non-interactive)
     // article in testing, which is both an odd tab stop and paints the
     // browser's native focus ring on the whole card. Focus the heading
     // instead — the standard modal pattern, and what a screen reader should
-    // announce on open.
-    const heading = card.querySelector('h4');
+    // announce on open. It is now in titleWrap, but it's the same element.
     heading.setAttribute('tabindex', '-1');
     heading.focus();
   };

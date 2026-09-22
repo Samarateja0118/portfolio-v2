@@ -126,19 +126,38 @@ header.top nav a:hover{opacity:1}
    A <dialog> is used rather than a positioned div because the page has a fixed
    header at z-index 50 and the cards live inside .shell at z-index 2 — no
    z-index on a descendant can cross that. showModal() also brings focus
-   trapping, Escape, and ::backdrop for free. */
-dialog.card-modal{border:none;padding:0;background:none;overflow:visible;outline:none;
-  max-width:min(660px,92vw);width:100%;max-height:86vh;margin:auto}
+   trapping, Escape, and ::backdrop for free.
+
+   The dialog fills the viewport and centres [title, card] as a flex column,
+   rather than only centring the card with the UA's default margin:auto. That
+   is what puts the title directly above the card instead of stranding it in
+   whatever blank space happens to be left over — the group is centred, not
+   just the card, so the title's position follows the card's height instead
+   of being guessed at a fixed offset. */
+dialog.card-modal{position:fixed;inset:0;margin:0;width:100%;height:100%;color:var(--text);
+  border:none;padding:5vh 20px;background:none;overflow:visible;outline:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  box-sizing:border-box}
 dialog.card-modal::backdrop{background:rgba(4,4,6,.74);backdrop-filter:blur(7px);
   opacity:0;animation:veil .45s ease forwards}
 @keyframes veil{to{opacity:1}}
+
+/* The card's own title (h4 + .sub) is moved here by JS while open, not
+   duplicated — one accessible name, one focus target, one place it lives. */
+.modal-title{width:100%;max-width:min(660px,92vw);flex:none;
+  animation:lift .45s cubic-bezier(.2,.7,.2,1) forwards}
+.modal-title h4{font-family:"Instrument Serif",serif;font-weight:400;
+  font-size:clamp(26px,3.2vw,40px);line-height:1.08;margin-bottom:8px;outline:none}
+.modal-title .sub{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);
+  letter-spacing:.08em;text-transform:uppercase}
+
 dialog.card-modal article.card{outline:none;background:var(--bg-lift);border:1px solid var(--line-strong);
-  box-shadow:0 50px 120px -30px rgba(0,0,0,.85);max-height:86vh;overflow-y:auto;
+  box-shadow:0 50px 120px -30px rgba(0,0,0,.85);width:100%;max-width:min(660px,92vw);
+  max-height:min(66vh,640px);overflow-y:auto;flex:none;
   padding:clamp(26px,3vw,40px);animation:lift .45s cubic-bezier(.2,.7,.2,1) forwards}
 @keyframes lift{from{opacity:0;transform:perspective(1200px) translateZ(-140px) translateY(18px)}
                 to{opacity:1;transform:perspective(1200px) translateZ(0) translateY(0)}}
 dialog.card-modal .card-head{cursor:default}
-dialog.card-modal h4{outline:none}   /* programmatic focus target on open, not a visible affordance */
 /* inside the modal the detail is simply open; there is nothing to animate to */
 dialog.card-modal .detail{grid-template-rows:1fr !important;opacity:1 !important;transition:none}
 
@@ -147,6 +166,7 @@ dialog.card-modal .detail{grid-template-rows:1fr !important;opacity:1 !important
 
 @media(prefers-reduced-motion:reduce){
   dialog.card-modal::backdrop{animation:none;opacity:1}
+  .modal-title{animation:none}
   dialog.card-modal article.card{animation:none}
 }
 .grid h4{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(21px,2vw,27px);
