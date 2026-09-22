@@ -395,6 +395,7 @@ async function build() {
     const exit = Math.max(0, Math.min(1, 1 - (scrollY - last) / (innerHeight * 0.9)));
     intro = Math.min(1, intro + dt / 1.2);
     canvas.style.opacity = (exit * intro).toFixed(3);
+    canvas.style.visibility = exit < 0.02 ? 'hidden' : 'visible';
     if (exit < 0.02) return;
 
     // Skip the work while hidden — but never before the first frame, or a page

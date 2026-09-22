@@ -157,6 +157,12 @@ footer{padding:26px var(--gutter);border-top:1px solid var(--line);
   display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
   font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);letter-spacing:.06em}
 
+/* Everything below the last station is opaque. The scene fades out there, but
+   a fade is a value that can be wrong; this makes bleed-through structurally
+   impossible rather than merely unlikely. #work is deliberately excluded — the
+   scene is still travelling behind it on the way to the first station. */
+#more, #background, #contact, footer{position:relative;background:var(--bg)}
+
 /* ── reveal ───────────────────────────────────────────────────────────── */
 html.js .up{opacity:0;transform:translateY(18px)}
 .up{transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
