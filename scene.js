@@ -22,35 +22,65 @@ const io = new IntersectionObserver((entries) => {
 }, { rootMargin: '0px 0px -12% 0px' });
 document.querySelectorAll('.up').forEach(el => io.observe(el));
 
-// Expandable project cards. One at a time: the open card comes forward and the
-// others recede, which only reads as focus if there is exactly one focus. The
-// markup ships expanded so the content exists without JS; collapsing is the
-// enhancement, not the content.
+// Project cards open centred, in a native <dialog>. The card element itself is
+// moved into the dialog and a same-sized placeholder holds its slot, so the
+// grid behind never reflows and nothing jumps when it closes.
+//
+// The markup ships expanded and JS collapses it, so with no JS every word is
+// still on the page; the opening is the enhancement, not the content.
 (() => {
-  const grid = document.querySelector('.grid');
   const cards = [...document.querySelectorAll('[data-card]')];
-  if (!grid || !cards.length) return;
+  if (!cards.length) return;
 
-  const setOpen = (card, open) => {
-    card.classList.toggle('open', open);
-    card.querySelector('.card-head').setAttribute('aria-expanded', open ? 'true' : 'false');
+  const dlg = document.createElement('dialog');
+  dlg.className = 'card-modal';
+  document.body.appendChild(dlg);
+
+  let current = null, slot = null;
+
+  const close = () => {
+    if (!current) return;
+    current.classList.remove('open');
+    current.querySelector('.card-head').setAttribute('aria-expanded', 'false');
+    slot.replaceWith(current);                 // back into its own grid cell
+    const btn = current.querySelector('.card-head');
+    current = null; slot = null;
+    if (dlg.open) dlg.close();
+    btn.focus();                               // never strand the caret
   };
-  const closeAll = () => { cards.forEach(c => setOpen(c, false)); grid.classList.remove('has-open'); };
+
+  const open = (card) => {
+    if (current) close();
+    const r = card.getBoundingClientRect();
+    slot = document.createElement('div');
+    slot.className = 'card-slot';
+    slot.style.height = r.height + 'px';       // hold the space exactly
+    card.replaceWith(slot);
+    dlg.appendChild(card);
+    card.classList.add('open');
+    card.querySelector('.card-head').setAttribute('aria-expanded', 'true');
+    current = card;
+    dlg.showModal();
+    // showModal()'s default focus target landed on the (non-interactive)
+    // article in testing, which is both an odd tab stop and paints the
+    // browser's native focus ring on the whole card. Focus the heading
+    // instead — the standard modal pattern, and what a screen reader should
+    // announce on open.
+    const heading = card.querySelector('h4');
+    heading.setAttribute('tabindex', '-1');
+    heading.focus();
+  };
 
   cards.forEach((card) => {
     card.querySelector('.card-head').addEventListener('click', () => {
-      const willOpen = !card.classList.contains('open');
-      closeAll();
-      if (willOpen) { setOpen(card, true); grid.classList.add('has-open'); }
+      if (current === card) close(); else open(card);
     });
   });
 
-  addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || !grid.classList.contains('has-open')) return;
-    const open = cards.find(c => c.classList.contains('open'));
-    closeAll();
-    if (open) open.querySelector('.card-head').focus();   // don't lose the caret
-  });
+  // Escape fires dialog's own close event; keep the DOM in step with it.
+  dlg.addEventListener('close', () => { if (current) close(); });
+  // Clicking the backdrop means clicking the dialog itself, not the card.
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
 })();
 
 const loader = document.getElementById('loader');

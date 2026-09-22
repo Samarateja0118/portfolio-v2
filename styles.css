@@ -122,15 +122,33 @@ header.top nav a:hover{opacity:1}
   border:1px solid transparent}
 .grid article:hover{background:var(--bg-lift)}
 
-/* An open card comes forward and the rest fall back. The depth is real —
-   perspective on the grid, translateZ on the card — rather than a scale
-   pretending to be one. */
-.grid article.open{z-index:5;background:var(--bg-lift);border-color:var(--line-strong);
-  transform:translateZ(70px);box-shadow:0 40px 90px -20px rgba(0,0,0,.75),
-                                        0 0 0 1px rgba(237,237,240,.05)}
-.grid.has-open article:not(.open){opacity:.28;filter:blur(2.5px);
-  transform:translateZ(-60px) scale(.985)}
-.grid.has-open article:not(.open):hover{opacity:.55;filter:blur(1px)}
+/* An opened card leaves the grid and is presented centred, in the top layer.
+   A <dialog> is used rather than a positioned div because the page has a fixed
+   header at z-index 50 and the cards live inside .shell at z-index 2 — no
+   z-index on a descendant can cross that. showModal() also brings focus
+   trapping, Escape, and ::backdrop for free. */
+dialog.card-modal{border:none;padding:0;background:none;overflow:visible;outline:none;
+  max-width:min(660px,92vw);width:100%;max-height:86vh;margin:auto}
+dialog.card-modal::backdrop{background:rgba(4,4,6,.74);backdrop-filter:blur(7px);
+  opacity:0;animation:veil .45s ease forwards}
+@keyframes veil{to{opacity:1}}
+dialog.card-modal article.card{outline:none;background:var(--bg-lift);border:1px solid var(--line-strong);
+  box-shadow:0 50px 120px -30px rgba(0,0,0,.85);max-height:86vh;overflow-y:auto;
+  padding:clamp(26px,3vw,40px);animation:lift .45s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes lift{from{opacity:0;transform:perspective(1200px) translateZ(-140px) translateY(18px)}
+                to{opacity:1;transform:perspective(1200px) translateZ(0) translateY(0)}}
+dialog.card-modal .card-head{cursor:default}
+dialog.card-modal h4{outline:none}   /* programmatic focus target on open, not a visible affordance */
+/* inside the modal the detail is simply open; there is nothing to animate to */
+dialog.card-modal .detail{grid-template-rows:1fr !important;opacity:1 !important;transition:none}
+
+/* the placeholder holds the card's space so the grid does not jump on close */
+.card-slot{background:var(--bg)}
+
+@media(prefers-reduced-motion:reduce){
+  dialog.card-modal::backdrop{animation:none;opacity:1}
+  dialog.card-modal article.card{animation:none}
+}
 .grid h4{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(21px,2vw,27px);
   margin-bottom:6px;line-height:1.1}
 .grid .sub{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
