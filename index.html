@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=5">
+<link rel="stylesheet" href="styles.css?v=6">
 <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
@@ -271,25 +271,68 @@
       </div>
       <div class="links"><a href="https://github.com/Samarateja0118/sleep-deprivation-project" target="_blank" rel="noopener">Code →</a></div>
     </article>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-agent">
+        <h4>AI Data Agent</h4>
+        <div class="sub">LLM planner · Pandas · Live</div>
+        <p>Plain-English questions against a CSV — the model emits a schema-validated query plan rather than code, and pandas executes it.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-agent">
+        <div class="detail-inner">
+          <p>The planner never writes code. It emits a structured filter / aggregate /
+            group-by plan, and a guardrail layer checks that plan against the dataset's
+            <b>real columns</b> before anything runs — rejecting or self-correcting whatever
+            does not match.</p>
+          <p>That distinction is the whole safety argument. A generated <em>plan</em> can be
+            validated against a schema before execution; generated <em>code</em> can only be
+            run and hoped for.</p>
+          <p class="fine">Conversation memory is carried across multi-turn follow-ups, so
+            "now just the west region" means something.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://ai-data-agent-for-nlp.vercel.app/" target="_blank" rel="noopener">Live →</a><a href="https://github.com/Samarateja0118/Ai-data-agent-for-NLP" target="_blank" rel="noopener">Code →</a></div>
+    </article>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-resume">
+        <h4>Resume Tailor AI</h4>
+        <div class="sub">Full-stack · LLM pipeline</div>
+        <p>Parses an unstructured PDF resume through a multi-step LLM pipeline and rewrites it for a target role.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-resume">
+        <div class="detail-inner">
+          <p>Unstructured PDF in, structured output for a specific role out, through staged
+            prompts rather than one prompt asked to do everything at once.</p>
+          <p>It has retry and fallback logic for a specific reason: when the model's quota
+            runs out it falls back to a local path, so <b>the demo does not die mid-interview</b>.
+            That is the failure mode that actually costs something, so that is the one
+            designed for.</p>
+          <p class="fine">Owned end to end, from scoping to deployment.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/Samarateja0118/personal-AI-resume-tailor" target="_blank" rel="noopener">Code →</a></div>
+    </article>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-mlb">
+        <h4>MLB Pitch Dashboard</h4>
+        <div class="sub">Data viz · Full-stack</div>
+        <p>Per-pitcher speed, break, spin and contact quality from the 2025 season, sortable by any column.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-mlb">
+        <div class="detail-inner">
+          <p>Pick one of ten pitchers and the table fills with per-pitch metrics — count and
+            usage share, average speed, break and spin rate, and then what hitters actually
+            did with it, in exit speed and launch angle.</p>
+          <p>Sortable by any column and still readable on a phone. React and Tailwind on a
+            Vite build, over an Express REST API reading a SQLite pitch database.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/Samarateja0118/WNC-baseball-app" target="_blank" rel="noopener">Code →</a></div>
+    </article>
   </div>
 
-  <div class="list up" style="margin-top:44px">
-    <div class="row">
-      <div class="nm">AI Data Agent</div>
-      <div class="wt">Plain-English questions against a CSV — an LLM emits a schema-validated query plan rather than code, and pandas executes it.</div>
-      <div class="lk"><a href="https://ai-data-agent-for-nlp.vercel.app/" target="_blank" rel="noopener">demo</a><a href="https://github.com/Samarateja0118/Ai-data-agent-for-NLP" target="_blank" rel="noopener">code</a></div>
-    </div>
-    <div class="row">
-      <div class="nm">Resume Tailor AI</div>
-      <div class="wt">Parses a PDF resume through a multi-step LLM pipeline and rewrites it for a target role, falling back to a local path when quota runs out.</div>
-      <div class="lk"><a href="https://github.com/Samarateja0118/personal-AI-resume-tailor" target="_blank" rel="noopener">code</a></div>
-    </div>
-    <div class="row">
-      <div class="nm">MLB Pitch Dashboard</div>
-      <div class="wt">Per-pitcher speed, break, spin and contact quality from the 2025 season, sortable by any column and readable on a phone.</div>
-      <div class="lk"><a href="https://github.com/Samarateja0118/WNC-baseball-app" target="_blank" rel="noopener">code</a></div>
-    </div>
-  </div>
 </div>
 
 <div class="band" id="background">
@@ -355,6 +398,6 @@
 
 </div><!-- /shell -->
 
-<script type="module" src="scene.js?v=5"></script>
+<script type="module" src="scene.js?v=6"></script>
 </body>
 </html>

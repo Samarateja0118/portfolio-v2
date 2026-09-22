@@ -171,17 +171,6 @@ html.js .card.open .detail{grid-template-rows:1fr;opacity:1}
   .grid.has-open article:not(.open){transform:none;filter:none;opacity:.35}
 }
 
-/* ── minor list ───────────────────────────────────────────────────────── */
-.list{border-top:1px solid var(--line)}
-.list .row{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(0,1.5fr) auto;gap:22px;
-  align-items:baseline;padding:16px 0;border-bottom:1px solid var(--line)}
-.list .row .nm{font-family:"Instrument Serif",serif;font-size:1.12em}
-.list .row .wt{color:var(--muted);font-size:.92em;max-width:62ch}
-.list .row .lk{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);white-space:nowrap}
-.list .row .lk a{margin-left:14px}
-.list .row .lk a:hover{color:var(--text)}
-@media(max-width:760px){.list .row{grid-template-columns:1fr;gap:6px}.list .row .lk a{margin:0 16px 0 0}}
-
 /* ── experience / education ───────────────────────────────────────────── */
 .entry{display:grid;grid-template-columns:200px 1fr;gap:28px;padding:26px 0;border-bottom:1px solid var(--line)}
 .entry .when{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);letter-spacing:.06em}
