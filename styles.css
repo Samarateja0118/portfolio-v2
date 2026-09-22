@@ -113,9 +113,24 @@ header.top nav a:hover{opacity:1}
 .links .none{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint)}
 
 /* ── secondary work grid ──────────────────────────────────────────────── */
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line)}
-.grid article{background:var(--bg);padding:clamp(24px,2.6vw,36px);transition:background .3s}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);
+  perspective:1600px}
+.grid article{background:var(--bg);padding:clamp(24px,2.6vw,36px);position:relative;
+  transform-origin:center;
+  transition:background .3s ease,opacity .45s ease,filter .45s ease,
+             transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s ease,border-color .3s ease;
+  border:1px solid transparent}
 .grid article:hover{background:var(--bg-lift)}
+
+/* An open card comes forward and the rest fall back. The depth is real —
+   perspective on the grid, translateZ on the card — rather than a scale
+   pretending to be one. */
+.grid article.open{z-index:5;background:var(--bg-lift);border-color:var(--line-strong);
+  transform:translateZ(70px);box-shadow:0 40px 90px -20px rgba(0,0,0,.75),
+                                        0 0 0 1px rgba(237,237,240,.05)}
+.grid.has-open article:not(.open){opacity:.28;filter:blur(2.5px);
+  transform:translateZ(-60px) scale(.985)}
+.grid.has-open article:not(.open):hover{opacity:.55;filter:blur(1px)}
 .grid h4{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(21px,2vw,27px);
   margin-bottom:6px;line-height:1.1}
 .grid .sub{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
@@ -149,7 +164,12 @@ html.js .card.open .detail{grid-template-rows:1fr;opacity:1}
 .detail-inner p b{color:var(--text);font-weight:500}
 .detail-inner .fine{font-size:.86em;color:var(--faint)}
 .mono-in{font-family:"IBM Plex Mono",monospace;font-size:.86em;color:var(--text)}
-@media(prefers-reduced-motion:reduce){html.js .detail{transition:none}}
+@media(prefers-reduced-motion:reduce){
+  html.js .detail{transition:none}
+  .grid article{transition:opacity .2s ease}
+  .grid article.open{transform:none;box-shadow:none}
+  .grid.has-open article:not(.open){transform:none;filter:none;opacity:.35}
+}
 
 /* ── minor list ───────────────────────────────────────────────────────── */
 .list{border-top:1px solid var(--line)}

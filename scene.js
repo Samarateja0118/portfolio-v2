@@ -22,16 +22,36 @@ const io = new IntersectionObserver((entries) => {
 }, { rootMargin: '0px 0px -12% 0px' });
 document.querySelectorAll('.up').forEach(el => io.observe(el));
 
-// Expandable project cards. The markup ships expanded so the content exists
-// without JS; collapsing is the enhancement, not the content.
-document.querySelectorAll('[data-card]').forEach((card) => {
-  const btn = card.querySelector('.card-head');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    const open = card.classList.toggle('open');
-    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+// Expandable project cards. One at a time: the open card comes forward and the
+// others recede, which only reads as focus if there is exactly one focus. The
+// markup ships expanded so the content exists without JS; collapsing is the
+// enhancement, not the content.
+(() => {
+  const grid = document.querySelector('.grid');
+  const cards = [...document.querySelectorAll('[data-card]')];
+  if (!grid || !cards.length) return;
+
+  const setOpen = (card, open) => {
+    card.classList.toggle('open', open);
+    card.querySelector('.card-head').setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  const closeAll = () => { cards.forEach(c => setOpen(c, false)); grid.classList.remove('has-open'); };
+
+  cards.forEach((card) => {
+    card.querySelector('.card-head').addEventListener('click', () => {
+      const willOpen = !card.classList.contains('open');
+      closeAll();
+      if (willOpen) { setOpen(card, true); grid.classList.add('has-open'); }
+    });
   });
-});
+
+  addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !grid.classList.contains('has-open')) return;
+    const open = cards.find(c => c.classList.contains('open'));
+    closeAll();
+    if (open) open.querySelector('.card-head').focus();   // don't lose the caret
+  });
+})();
 
 const loader = document.getElementById('loader');
 const pctEl  = document.getElementById('pct');
