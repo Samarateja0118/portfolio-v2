@@ -354,6 +354,7 @@ async function build() {
     const r = el.getBoundingClientRect();
     return r.top + scrollY + r.height / 2 - innerHeight / 2;
   };
+  const lastPanel = keyEls[keyEls.length - 1].querySelector('.panel');
   let focuses = keyEls.map(focusOf);
   const recomputeFocuses = () => { focuses = keyEls.map(focusOf); };
 
@@ -388,11 +389,13 @@ async function build() {
     requestAnimationFrame(frame);
     const dt = Math.min(clock.getDelta(), 0.05);
 
-    // The scene has an ending. Past the last station it fades out over roughly
-    // a screen and stops rendering entirely — everything below is opaque
-    // content, so a camera parked behind it is pure cost.
-    const last = focuses[focuses.length - 1];
-    const exit = Math.max(0, Math.min(1, 1 - (scrollY - last) / (innerHeight * 0.9)));
+    // The scene has an ending, and it is tied to the last panel rather than to a
+    // scroll distance: it is gone by the time that panel has risen past the
+    // middle of the screen. Anchoring it to a distance instead left the gates
+    // half-visible in the gap below the panel, which is exactly where there is
+    // no content to cover them.
+    const pr = lastPanel.getBoundingClientRect();
+    const exit = Math.max(0, Math.min(1, (pr.bottom - innerHeight * 0.55) / (innerHeight * 0.35)));
     intro = Math.min(1, intro + dt / 1.2);
     canvas.style.opacity = (exit * intro).toFixed(3);
     canvas.style.visibility = exit < 0.02 ? 'hidden' : 'visible';
