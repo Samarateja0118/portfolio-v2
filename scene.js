@@ -145,14 +145,19 @@ setTimeout(() => { Object.keys(steps).forEach(k => steps[k] = true); finish(); }
 /* ── from here down is the scene, and it is optional ─────────────────── */
 
 const reduce  = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const narrow  = innerWidth < 861;
+// Below 861px the panel goes full-width and stacks above/below the scene
+// instead of sitting beside it (see styles.css), so the camera needs a
+// centred rig rather than the desktop's alternating left/right one. This used
+// to be the flag that turned the scene off entirely on phones; it now only
+// selects the lighter, centred variant.
+const mobile  = innerWidth < 861;
 let hasWebGL = false;
 try {
   const t = document.createElement('canvas');
   hasWebGL = !!(t.getContext('webgl2') || t.getContext('webgl'));
 } catch { hasWebGL = false; }
 
-if (reduce || narrow || !hasWebGL) {
+if (reduce || !hasWebGL) {
   settle('scene');
 } else {
   build().catch((e) => { console.warn('[scene] disabled:', e); settle('scene'); });
@@ -165,13 +170,18 @@ async function build() {
   } catch (e) { console.warn('[scene] three.js failed to load:', e); settle('scene'); return; }
 
   const canvas = document.getElementById('scene');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobile, alpha: true, powerPreference: 'low-power' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.25 : 1.75));
   renderer.setClearColor(0x000000, 0);
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0x08080B, 26, 74);
-  const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 200);
+  // A phone's aspect ratio is well under 1, which starves the *horizontal*
+  // field of view a 38°-vertical camera was tuned around on a 16:9 desktop —
+  // at that FOV a portrait screen would see a sliver of each station. Opening
+  // the vertical FOV up on mobile buys back the horizontal spread instead of
+  // pulling the camera absurdly far from everything it needs to frame.
+  const camera = new THREE.PerspectiveCamera(mobile ? 70 : 38, innerWidth / innerHeight, 0.1, 200);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   const key = new THREE.DirectionalLight(0xffffff, 0.75);
@@ -202,7 +212,7 @@ async function build() {
     for (const y of [-2.5, 2.5]) g0.add(seg(new THREE.Vector3(-3.5, y, 0), new THREE.Vector3(3.5, y, 0), lineMat(WHITE, 0.3)));
 
     const geo = new THREE.BoxGeometry(1.5, 0.12, 0.12);
-    const recs = Array.from({ length: 26 }, () => {
+    const recs = Array.from({ length: mobile ? 16 : 26 }, () => {
       const m = new THREE.Mesh(geo, mat(DIM));
       m.userData = { bad: false, held: 0 };
       reset(m, true);
@@ -346,7 +356,7 @@ async function build() {
     const curve = new THREE.Line(new THREE.BufferGeometry().setFromPoints(bow), lineMat(SIGNAL, 0));
     g2.add(curve);
     const dotGeo = new THREE.SphereGeometry(0.055, 8, 8);
-    const dots = Array.from({ length: 70 }, () => {
+    const dots = Array.from({ length: mobile ? 40 : 70 }, () => {
       const m = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: WHITE, transparent: true, opacity: 0.5 }));
       g2.add(m); return { mesh: m, t: Math.random() };
     });
@@ -426,7 +436,18 @@ async function build() {
   // An object appears on the RIGHT of frame when the camera looks to the LEFT
   // of it, so these mirror the panels: the text column and the scene never
   // occupy the same half. Panels alternate right/left down the page.
-  const anchors = [
+  // Desktop looks across at the scene from beside the panel it shares the row
+  // with. On mobile there is no row — the panel sits above the scene in the
+  // stack — so the camera instead looks straight down the middle of each
+  // station, pulled back a little farther to put the widest ones (four gates,
+  // five storage nodes) fully in frame at the wider FOV set above.
+  const anchors = mobile ? [
+    { p: new THREE.Vector3(0, 0.9, 15.5), l: new THREE.Vector3(0, 0.2, 0) },   // hero
+    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 00 — gate, widest record spread
+    { p: new THREE.Vector3(0, 1.3, 14.5), l: new THREE.Vector3(0,-0.1, 0) },   // 01 — five storage nodes
+    { p: new THREE.Vector3(0, 0.3, 11.0), l: new THREE.Vector3(0, 0.0, 0) },   // 02 — small calibration plot
+    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 03 — four phase gates
+  ] : [
     { p: new THREE.Vector3(-1.7, 1.3, 13.5), l: new THREE.Vector3(-2.8, 0.3, 0) },  // hero — text left,  scene right
     { p: new THREE.Vector3( 1.7, 0.7,  9.0), l: new THREE.Vector3( 2.8, 0.1, 0) },  // 00   — panel right, scene left
     { p: new THREE.Vector3(-1.4, 2.0, 13.0), l: new THREE.Vector3(-2.2,-0.2, 0) },  // 01   — panel left,  scene right

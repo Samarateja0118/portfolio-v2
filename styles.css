@@ -65,6 +65,7 @@ header.top nav a:hover{opacity:1}
 
 /* ── generic section frame ────────────────────────────────────────────── */
 .band{padding:clamp(80px,12vh,150px) var(--gutter);max-width:var(--maxw);margin:0 auto;width:100%}
+#work{padding-bottom:0}
 .band-head{display:flex;gap:18px;align-items:baseline;margin-bottom:clamp(28px,4vw,52px);
   border-top:1px solid var(--line);padding-top:16px}
 .band-head .n{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);letter-spacing:.1em}
@@ -251,8 +252,14 @@ html.js .up.in{opacity:1;transform:none}
   .station{min-height:auto;padding-top:60px;padding-bottom:60px}
 }
 @media(max-width:860px){
-  #scene{display:none}
+  /* The scene now renders here too (see scene.js), centred behind a full-width
+     stack instead of beside it. The panel needs its own backdrop again — on
+     desktop it only exists so text stays readable over the scene's own half of
+     the screen; here the scene runs under the whole width, so the panel has to
+     cover for itself rather than relying on layout to keep clear of it. */
   .station{min-height:auto;padding-top:54px;padding-bottom:54px}
-  .station .panel{width:100%;background:none;border:none;padding:0;backdrop-filter:none;
-    border-top:1px solid var(--line);padding-top:26px}
+  .station .panel{width:100%;
+    background:linear-gradient(180deg,rgba(8,8,11,.78),rgba(8,8,11,.62));
+    backdrop-filter:blur(6px);border:1px solid var(--line);
+    padding:22px}
 }
