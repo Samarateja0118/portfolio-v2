@@ -47,6 +47,7 @@ a{color:inherit;text-decoration:none}
   padding:var(--gutter);transition:opacity .7s ease,visibility .7s}
 #loader.done{opacity:0;visibility:hidden}
 #loader .who{font-family:"Instrument Serif",serif;font-size:clamp(28px,4vw,52px);line-height:1}
+#loader .who em{font-style:italic}
 #loader .pct{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--faint)}
 #bar{position:fixed;left:0;bottom:0;height:1px;background:var(--text);width:0;z-index:101;transition:width .3s ease}
 #loader.done ~ #bar{opacity:0}
