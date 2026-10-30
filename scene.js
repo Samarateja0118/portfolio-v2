@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   One WebGL scene, four stations, one idea: every station shows something
+   One WebGL scene, five stations, one idea: every station shows something
    going wrong and the system absorbing it. Colour is the grammar — the whole
    scene is bone-white until something fails, and only then is it warm.
 
@@ -201,22 +201,131 @@ async function build() {
     return g;
   };
 
-  /* ── 00 · Access AI Gateway ──────────────────────────────────────────
+  /* ── 00 · Portico ────────────────────────────────────────────────────
+     A week of consultation slots. Clients book open times; now and then two
+     race for the same one. The first takes it, the second is refused at the
+     slot (the 409) and lands on a fresh time instead — never a double booking.
+     The calendar leans toward the pointer, so it reads as an object in space
+     rather than a picture of one.                                          */
+  const g0 = makeStation(0);
+  {
+    const COLS = 5, ROWS = 4, CW = 1.12, RH = 0.74;
+    const cal = new THREE.Group();
+    cal.rotation.x = -0.32;
+    g0.add(cal);
+    const frame = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.PlaneGeometry(COLS * CW + 0.3, ROWS * RH + 0.3)), lineMat(WHITE, 0.14));
+    cal.add(frame);
+    const tileGeo = new THREE.BoxGeometry(CW - 0.16, RH - 0.16, 0.08);
+    const slots = [];
+    for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) {
+      const m = new THREE.Mesh(tileGeo, mat(0x1C1C22, { emissive: WHITE, emissiveIntensity: 0.03 }));
+      m.position.set((c - (COLS - 1) / 2) * CW, ((ROWS - 1) / 2 - r) * RH, 0);
+      cal.add(m);
+      slots.push({ mesh: m, booked: false, age: 0, flash: 0, refuse: 0, claimed: false });
+    }
+    const tokGeo = new THREE.SphereGeometry(0.11, 12, 12);
+    const toks = Array.from({ length: 6 }, () => {
+      const m = new THREE.Mesh(tokGeo, mat(WHITE, { emissive: WHITE, emissiveIntensity: 0.35 }));
+      m.visible = false; cal.add(m);
+      return { mesh: m, state: 'idle', t: 0, slot: null, from: new THREE.Vector3(), dur: 1 };
+    });
+    const open = () => slots.filter(s => !s.booked && !s.claimed);
+    const pick = (list) => list[Math.floor(Math.random() * list.length)];
+    const slotPos = (s, lift = 0.28) => new THREE.Vector3(s.mesh.position.x, s.mesh.position.y, lift);
+    const launch = (tok, slot, delay, side) => {
+      tok.slot = slot; tok.state = 'wait'; tok.t = -delay; tok.dur = 1.1;
+      tok.from.set(side * (3.9 + Math.random() * 0.6), -1.2 + Math.random() * 2.4, 1.6);
+      tok.mesh.position.copy(tok.from); tok.mesh.visible = false; tok.mesh.scale.setScalar(1);
+      tok.mesh.material.color.setHex(WHITE); tok.mesh.material.emissive.setHex(WHITE);
+    };
+    let spawnT = 0.4, raceT = 2.2;
+    const pointer = { x: 0, y: 0 };
+    if (!mobile) addEventListener('pointermove', (e) => {
+      pointer.x = e.clientX / innerWidth * 2 - 1; pointer.y = e.clientY / innerHeight * 2 - 1;
+    }, { passive: true });
+
+    g0.userData.step = (dt) => {
+      cal.rotation.y += ((-0.28 + pointer.x * 0.22) - cal.rotation.y) * Math.min(1, dt * 3);
+      cal.rotation.x += ((-0.32 + pointer.y * 0.14) - cal.rotation.x) * Math.min(1, dt * 3);
+
+      spawnT -= dt; raceT -= dt;
+      const free = toks.filter(t => t.state === 'idle');
+      if (raceT <= 0 && free.length >= 2 && open().length > 1) {
+        // two clients, one time: the second is the one that gets refused
+        const s = pick(open()); s.claimed = true;
+        launch(free[0], s, 0, -1);
+        launch(free[1], s, 0.35, 1);
+        raceT = 3.4 + Math.random() * 1.6; spawnT = Math.max(spawnT, 1.2);
+      } else if (spawnT <= 0 && free.length && open().length) {
+        const s = pick(open()); s.claimed = true;
+        launch(free[0], s, 0, Math.random() < 0.5 ? -1 : 1);
+        spawnT = 0.9 + Math.random() * 0.6;
+      }
+
+      for (const k of toks) {
+        if (k.state === 'idle') continue;
+        k.t += dt;
+        if (k.state === 'wait') { if (k.t >= 0) { k.state = 'fly'; k.t = 0; k.mesh.visible = true; } continue; }
+        if (k.state === 'fly' || k.state === 'retry') {
+          const q = Math.min(k.t / k.dur, 1);
+          const e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+          k.mesh.position.lerpVectors(k.from, slotPos(k.slot), e);
+          k.mesh.position.z += Math.sin(q * Math.PI) * 0.9;
+          if (q < 1) continue;
+          if (!k.slot.booked) {                      // got there first: booked
+            k.slot.booked = true; k.slot.claimed = false; k.slot.age = 0; k.slot.flash = 1;
+            k.state = 'land'; k.t = 0;
+          } else {                                   // re-checked at booking: 409
+            k.slot.refuse = 1;
+            k.mesh.material.color.setHex(SIGNAL); k.mesh.material.emissive.setHex(SIGNAL);
+            k.state = 'bounce'; k.t = 0; k.from.copy(k.mesh.position);
+          }
+        } else if (k.state === 'bounce') {
+          k.mesh.position.z = k.from.z + Math.sin(Math.min(k.t / 0.5, 1) * Math.PI) * 0.7 + k.t * 0.4;
+          if (k.t > 0.55) {                          // offered fresh times, takes one
+            const s = pick(open());
+            if (!s) { k.state = 'land'; k.t = 0.8; continue; }
+            s.claimed = true; k.slot = s; k.from.copy(k.mesh.position);
+            k.state = 'retry'; k.t = 0; k.dur = 0.8;
+            k.mesh.material.color.setHex(WHITE); k.mesh.material.emissive.setHex(WHITE);
+          }
+        } else if (k.state === 'land') {
+          k.mesh.scale.setScalar(Math.max(0, 1 - k.t * 2.5));
+          if (k.t > 0.4) { k.state = 'idle'; k.mesh.visible = false; }
+        }
+      }
+
+      for (const s of slots) {
+        s.flash = Math.max(0, s.flash - dt * 1.5);
+        s.refuse = Math.max(0, s.refuse - dt * 1.3);
+        if (s.booked && (s.age += dt) > 7 + Math.random() * 3) s.booked = false;   // the week moves on
+        const m = s.mesh.material;
+        m.emissive.setHex(s.refuse > 0 ? SIGNAL : WHITE);
+        const want = s.refuse > 0 ? 0.25 + s.refuse * 0.5 : (s.booked ? 0.22 + s.flash * 0.5 : 0.03);
+        m.emissiveIntensity += (want - m.emissiveIntensity) * 0.2;
+        const z = s.booked ? 0.12 : 0;
+        s.mesh.position.z += (z - s.mesh.position.z) * Math.min(1, dt * 6);
+      }
+    };
+  }
+
+  /* ── 01 · Access AI Gateway ──────────────────────────────────────────
      Records stream toward a gate. Most pass. One carries an instruction it
      should not, and is caught at the boundary rather than downstream.      */
-  const g0 = makeStation(0);
+  const g1 = makeStation(1);
   {
     const gate = new THREE.Mesh(new THREE.PlaneGeometry(7, 5),
       new THREE.MeshBasicMaterial({ color: WHITE, transparent: true, opacity: 0.045, side: THREE.DoubleSide }));
-    g0.add(gate);
-    for (const y of [-2.5, 2.5]) g0.add(seg(new THREE.Vector3(-3.5, y, 0), new THREE.Vector3(3.5, y, 0), lineMat(WHITE, 0.3)));
+    g1.add(gate);
+    for (const y of [-2.5, 2.5]) g1.add(seg(new THREE.Vector3(-3.5, y, 0), new THREE.Vector3(3.5, y, 0), lineMat(WHITE, 0.3)));
 
     const geo = new THREE.BoxGeometry(1.5, 0.12, 0.12);
     const recs = Array.from({ length: mobile ? 16 : 26 }, () => {
       const m = new THREE.Mesh(geo, mat(DIM));
       m.userData = { bad: false, held: 0 };
       reset(m, true);
-      g0.add(m);
+      g1.add(m);
       return m;
     });
     function reset(m, initial) {
@@ -230,7 +339,7 @@ async function build() {
       m.scale.setScalar(1);
       m.userData.v = 0.026 + Math.random() * 0.03;
     }
-    g0.userData.step = (dt) => {
+    g1.userData.step = (dt) => {
       for (const m of recs) {
         const d = m.userData;
         if (d.held > 0) {                       // caught at the gate, dissolving
@@ -247,10 +356,10 @@ async function build() {
     };
   }
 
-  /* ── 01 · Distributed Object Storage ─────────────────────────────────
+  /* ── 02 · Distributed Object Storage ─────────────────────────────────
      Chunks scored against every node, placed on the winner — and when a
      node stops answering, the write walks down the ranking instead.       */
-  const g1 = makeStation(1);
+  const g2 = makeStation(2);
   {
     const N = 5, GAP = 2.05;
     const nodes = [];
@@ -258,10 +367,10 @@ async function build() {
     for (let i = 0; i < N; i++) {
       const m = new THREE.Mesh(nodeGeo, mat(0x23232A, { emissive: WHITE, emissiveIntensity: 0.05 }));
       m.position.set((i - (N - 1) / 2) * GAP, -1.7, 0);
-      g1.add(m);
+      g2.add(m);
       nodes.push({ mesh: m, pile: 0, down: false, flash: 0 });
     }
-    const lines = nodes.map(() => { const l = seg(new THREE.Vector3(), new THREE.Vector3(), lineMat(WHITE, 0)); g1.add(l); return l; });
+    const lines = nodes.map(() => { const l = seg(new THREE.Vector3(), new THREE.Vector3(), lineMat(WHITE, 0)); g2.add(l); return l; });
     const hash = (a, b) => { let h = 2166136261 ^ a; h = Math.imul(h ^ b, 16777619);
       h ^= h >>> 13; h = Math.imul(h, 2246822507); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
     const rank = id => nodes.map((n, i) => ({ i, w: hash(id, i * 2654435761) }))
@@ -269,12 +378,12 @@ async function build() {
     const cGeo = new THREE.BoxGeometry(0.36, 0.36, 0.36);
     const chunks = Array.from({ length: 10 }, () => {
       const m = new THREE.Mesh(cGeo, mat(WHITE, { emissive: WHITE, emissiveIntensity: 0.18 }));
-      m.visible = false; g1.add(m);
+      m.visible = false; g2.add(m);
       return { mesh: m, state: 'idle', t: 0, target: 0, from: new THREE.Vector3(), fell: false };
     });
     let id = 1, spawnT = 0, downT = 3;
     const SPAWN = new THREE.Vector3(0, 2.6, 0);
-    g1.userData.step = (dt) => {
+    g2.userData.step = (dt) => {
       downT -= dt;
       if (downT <= 0) {
         const d = nodes.find(n => n.down);
@@ -338,30 +447,30 @@ async function build() {
     };
   }
 
-  /* ── 02 · pmbench ────────────────────────────────────────────────────
+  /* ── 03 · pmbench ────────────────────────────────────────────────────
      Forecasts against the diagonal of perfect calibration. They settle
      onto a bowed curve — confident, and wrong about being confident.      */
-  const g2 = makeStation(2);
+  const g3 = makeStation(3);
   {
     const S = 4.4;
-    g2.add(seg(new THREE.Vector3(-S / 2, -S / 2, 0), new THREE.Vector3(S / 2, S / 2, 0), lineMat(WHITE, 0.35)));
+    g3.add(seg(new THREE.Vector3(-S / 2, -S / 2, 0), new THREE.Vector3(S / 2, S / 2, 0), lineMat(WHITE, 0.35)));
     const frame = new THREE.LineSegments(
       new THREE.EdgesGeometry(new THREE.PlaneGeometry(S, S)), lineMat(WHITE, 0.12));
-    g2.add(frame);
+    g3.add(frame);
     const bow = [];
     for (let i = 0; i <= 24; i++) {
       const x = i / 24, y = Math.pow(x, 1.9);     // overconfidence, bowed below
       bow.push(new THREE.Vector3((x - 0.5) * S, (y - 0.5) * S, 0));
     }
     const curve = new THREE.Line(new THREE.BufferGeometry().setFromPoints(bow), lineMat(SIGNAL, 0));
-    g2.add(curve);
+    g3.add(curve);
     const dotGeo = new THREE.SphereGeometry(0.055, 8, 8);
     const dots = Array.from({ length: mobile ? 40 : 70 }, () => {
       const m = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: WHITE, transparent: true, opacity: 0.5 }));
-      g2.add(m); return { mesh: m, t: Math.random() };
+      g3.add(m); return { mesh: m, t: Math.random() };
     });
     let phase = 0;
-    g2.userData.step = (dt) => {
+    g3.userData.step = (dt) => {
       phase += dt * 0.22;
       const settle = (Math.sin(phase) + 1) / 2;         // scatter ⇄ fitted curve
       curve.material.opacity = settle * 0.8;
@@ -378,10 +487,10 @@ async function build() {
     };
   }
 
-  /* ── 03 · SOP-guided agent ───────────────────────────────────────────
+  /* ── 04 · SOP-guided agent ───────────────────────────────────────────
      Four gates in fixed order. A reply that breaks one is discarded and
      replaced by a computed line — the workflow never skips a phase.       */
-  const g3 = makeStation(3);
+  const g4 = makeStation(4);
   {
     const PH = 4, GAP = 2.4;
     const gates = [];
@@ -389,17 +498,17 @@ async function build() {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.022, 8, 48),
         new THREE.MeshBasicMaterial({ color: WHITE, transparent: true, opacity: 0.3 }));
       ring.position.x = (i - (PH - 1) / 2) * GAP;
-      g3.add(ring);
+      g4.add(ring);
       gates.push({ ring, flash: 0 });
     }
     const tokGeo = new THREE.OctahedronGeometry(0.22);
     const tok = new THREE.Mesh(tokGeo, mat(WHITE, { emissive: WHITE, emissiveIntensity: 0.3 }));
-    g3.add(tok);
+    g4.add(tok);
     const ghost = new THREE.Mesh(tokGeo, new THREE.MeshBasicMaterial({ color: SIGNAL, transparent: true, opacity: 0 }));
-    g3.add(ghost);
+    g4.add(ghost);
     let t = 0, blockAt = 1 + Math.floor(Math.random() * 3), blocked = -1;
     const xOf = (i) => (i - (PH - 1) / 2) * GAP;
-    g3.userData.step = (dt) => {
+    g4.userData.step = (dt) => {
       t += dt * 0.42;
       if (t >= PH) { t = 0; blockAt = 1 + Math.floor(Math.random() * 3); blocked = -1; }
       const i = Math.floor(t), f = t - i;
@@ -429,7 +538,7 @@ async function build() {
     };
   }
 
-  stations.push(g0, g1, g2, g3);
+  stations.push(g0, g1, g2, g3, g4);
 
   /* ── camera rides the scroll through the stations ──────────────────── */
   const keyEls = [document.querySelector('.hero'), ...document.querySelectorAll('.station')];
@@ -443,16 +552,18 @@ async function build() {
   // five storage nodes) fully in frame at the wider FOV set above.
   const anchors = mobile ? [
     { p: new THREE.Vector3(0, 0.9, 15.5), l: new THREE.Vector3(0, 0.2, 0) },   // hero
-    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 00 — gate, widest record spread
-    { p: new THREE.Vector3(0, 1.3, 14.5), l: new THREE.Vector3(0,-0.1, 0) },   // 01 — five storage nodes
-    { p: new THREE.Vector3(0, 0.3, 11.0), l: new THREE.Vector3(0, 0.0, 0) },   // 02 — small calibration plot
-    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 03 — four phase gates
+    { p: new THREE.Vector3(0, 0.8, 13.0), l: new THREE.Vector3(0, 0.0, 0) },   // 00 — Portico calendar
+    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 01 — gate, widest record spread
+    { p: new THREE.Vector3(0, 1.3, 14.5), l: new THREE.Vector3(0,-0.1, 0) },   // 02 — five storage nodes
+    { p: new THREE.Vector3(0, 0.3, 11.0), l: new THREE.Vector3(0, 0.0, 0) },   // 03 — small calibration plot
+    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 04 — four phase gates
   ] : [
     { p: new THREE.Vector3(-1.7, 1.3, 13.5), l: new THREE.Vector3(-2.8, 0.3, 0) },  // hero — text left,  scene right
-    { p: new THREE.Vector3( 1.7, 0.7,  9.0), l: new THREE.Vector3( 2.8, 0.1, 0) },  // 00   — panel right, scene left
-    { p: new THREE.Vector3(-1.4, 2.0, 13.0), l: new THREE.Vector3(-2.2,-0.2, 0) },  // 01   — panel left,  scene right
-    { p: new THREE.Vector3( 1.7, 0.5,  8.8), l: new THREE.Vector3( 2.8, 0.0, 0) },  // 02   — panel right, scene left
-    { p: new THREE.Vector3(-1.9, 0.7, 14.0), l: new THREE.Vector3(-3.0, 0.0, 0) },  // 03   — panel left,  scene right (all four gates)
+    { p: new THREE.Vector3( 2.0, 1.0, 13.5), l: new THREE.Vector3( 3.4, 0.1, 0) },  // 00   — panel right, scene left
+    { p: new THREE.Vector3(-1.7, 0.7,  9.0), l: new THREE.Vector3(-2.8, 0.1, 0) },  // 01   — panel left,  scene right
+    { p: new THREE.Vector3( 1.4, 2.0, 13.0), l: new THREE.Vector3( 2.2,-0.2, 0) },  // 02   — panel right, scene left
+    { p: new THREE.Vector3(-1.7, 0.5,  8.8), l: new THREE.Vector3(-2.8, 0.0, 0) },  // 03   — panel left,  scene right
+    { p: new THREE.Vector3( 1.9, 0.7, 14.0), l: new THREE.Vector3( 3.0, 0.0, 0) },  // 04   — panel right, scene left (all four gates)
   ];
   const focusOf = (el) => {
     const r = el.getBoundingClientRect();

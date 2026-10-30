@@ -14,11 +14,12 @@ Nothing decorative is ever allowed to use it.
 
 ## The scene
 
-One `three.js` scene, four stations, one camera riding the scroll. Each station
+One `three.js` scene, five stations, one camera riding the scroll. Each station
 is that project's actual failure mode, running live:
 
 | Station | Shows |
 |---|---|
+| Portico | A week of consultation slots; two clients race for one, the second is refused at the slot (the 409) and lands on a fresh time. The calendar tilts toward the pointer on desktop |
 | Access AI Gateway | Records streaming at a boundary; the one carrying an instruction is caught *at* the gate, not downstream |
 | Distributed Object Storage | Chunks scored against five nodes by rendezvous hashing; a node drops and the write walks down the ranking |
 | Polymarket Forecast Benchmark | Forecasts against the diagonal of perfect calibration, settling onto a bowed, overconfident curve |
@@ -47,4 +48,5 @@ python3 -m http.server 8799
 - **Camera anchors mirror the panels.** An object appears on the *right* of frame
   when the camera looks to the *left* of it. The panels alternate right/left down
   the page, so the anchors alternate the other way and text never sits on top of
-  the scene.
+  the scene. Adding or removing a station flips every panel after it, so the
+  anchors after it flip too.

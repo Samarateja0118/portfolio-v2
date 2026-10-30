@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=14">
+<link rel="stylesheet" href="styles.css?v=15">
 <script src="js-flag.js"></script>
 </head>
 <body>
@@ -61,13 +61,42 @@
 </section>
 
 <div class="band" id="work">
-  <div class="band-head up"><span class="n">01</span><h2>Selected work — four failures, handled</h2></div>
+  <div class="band-head up"><span class="n">01</span><h2>Selected work — five failures, handled</h2></div>
 </div>
 
 <!-- ── station 0 ─────────────────────────────────────────────────────── -->
 <section class="station" data-station="0">
   <div class="panel up">
-    <span class="idx">01 — Prompt injection, arriving from your own database</span>
+    <span class="idx">01 — Two clients ask for the same 10am</span>
+    <h3>Portico</h3>
+    <div class="sub">Founder · AI intake for immigration law firms · Live</div>
+    <p>Website intake for small immigration firms, in English, Spanish or French.
+      It takes only what a conflict check and a booking need, flags detention or
+      a hearing within 14 days as urgent for the on-call attorney, and books a
+      real consultation.</p>
+    <p>The model never writes to the database directly. A lead exists only
+      because it called <span class="mono-in">save_lead</span>, and it can book
+      only a time <span class="mono-in">find_slots</span> actually returned, so it
+      cannot invent one.</p>
+    <div class="pull">The slot is checked again <b>inside the booking transaction</b>.
+      Two people racing for the same time get one booking and one 409 with fresh
+      times, never a double-booked attorney.</div>
+    <p>Identity numbers are masked before anything is stored, every firm's records
+      are scoped by <span class="mono-in">firm_id</span>, and when staff ask about
+      their own cases, an answer naming a date or number no lookup returned is
+      <b>withheld rather than shown</b>.</p>
+    <p class="fine">327 tests in CI; intake evals in three languages run against
+      the real model. Clio and Docketwise sync is contract-tested, not yet proven
+      against a live account.</p>
+    <div class="tags"><span>Python</span><span>FastAPI</span><span>PostgreSQL</span><span>Next.js / TypeScript</span><span>Claude API</span></div>
+    <div class="links"><a href="https://porticointake.com" target="_blank" rel="noopener">Live →</a><span class="none">Code private</span></div>
+  </div>
+</section>
+
+<!-- ── station 1 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="1">
+  <div class="panel up">
+    <span class="idx">02 — Prompt injection, arriving from your own database</span>
     <h3>Access AI Gateway</h3>
     <div class="sub">LLM security · Multi-tenant backend</div>
     <p>An LLM gateway over a multi-tenant access-control system, built around
@@ -87,10 +116,10 @@
   </div>
 </section>
 
-<!-- ── station 1 ─────────────────────────────────────────────────────── -->
-<section class="station" data-station="1">
+<!-- ── station 2 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="2">
   <div class="panel up">
-    <span class="idx">02 — A node stops answering, mid-write</span>
+    <span class="idx">03 — A node stops answering, mid-write</span>
     <h3>Distributed Object Storage</h3>
     <div class="sub">S3-inspired · Java 21 · Eight services</div>
     <p>Objects are split into content-addressed chunks on a data plane; their
@@ -111,10 +140,10 @@
   </div>
 </section>
 
-<!-- ── station 2 ─────────────────────────────────────────────────────── -->
-<section class="station" data-station="2">
+<!-- ── station 3 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="3">
   <div class="panel up">
-    <span class="idx">03 — A benchmark that is secretly a memory test</span>
+    <span class="idx">04 — A benchmark that is secretly a memory test</span>
     <h3>Polymarket Forecast Benchmark</h3>
     <div class="sub">LLM evaluation · Calibration research</div>
     <p>Prediction markets label themselves: record a forecast, and weeks later
@@ -137,10 +166,10 @@
   </div>
 </section>
 
-<!-- ── station 3 ─────────────────────────────────────────────────────── -->
-<section class="station" data-station="3">
+<!-- ── station 4 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="4">
   <div class="panel up">
-    <span class="idx">04 — The model writes a reply it is not allowed to send</span>
+    <span class="idx">05 — The model writes a reply it is not allowed to send</span>
     <h3>SOP-Guided Claims Agent</h3>
     <div class="sub">LLM agent · Guardrails · Insurance</div>
     <p>A claims-support agent that must walk a fixed four-phase workflow —
@@ -166,36 +195,6 @@
 <div class="band" id="more">
   <div class="band-head up"><span class="n">02</span><h2>Also shipped</h2></div>
   <div class="grid up">
-    <article class="card" data-card>
-      <button class="card-head" aria-expanded="false" aria-controls="d-portico">
-        <h4>Portico</h4>
-        <div class="sub">Founder · AI intake for immigration law firms · Live</div>
-        <p>A website chat that takes a new client's details in English, Spanish or French, flags a detention or a hearing next week as urgent, and books a real consultation. The model creates a lead or a booking only through tools that check its work.</p>
-        <span class="cue"><i></i>Detail</span>
-      </button>
-      <div class="detail" id="d-portico">
-        <div class="detail-inner">
-          <p>The assistant can only book a time the slot finder actually returned, so it
-            cannot invent one. The slot is checked again inside the booking transaction, and
-            two people racing for the same time get a <b>409 and fresh times</b>, not a double
-            booking.</p>
-          <p>A-numbers, SSNs and passport numbers are <b>masked before anything is
-            stored</b>, and the chat never asks for immigration or criminal history. Every
-            firm's data is scoped by <span class="mono-in">firm_id</span>: another firm's
-            record answers 404, as if it did not exist, and a test fails if any table drops
-            the column.</p>
-          <p>Staff can ask questions about their own records, and the answer is checked
-            against what the lookups returned before anyone sees it. A number, date or name
-            no lookup produced gets one chance to correct itself, then the answer is
-            <b>withheld rather than shown</b>.</p>
-          <p class="fine">FastAPI, Postgres and a Next.js dashboard with an embeddable widget.
-            327 tests in CI with a scripted stand-in for Claude; scripted intake evals in three
-            languages run separately against the real model. Clio and Docketwise sync is pinned
-            by contract tests, not yet proven against a live account.</p>
-        </div>
-      </div>
-      <div class="links"><a href="https://porticointake.com" target="_blank" rel="noopener">Live →</a><span class="none">Code private</span></div>
-    </article>
     <article class="card" data-card>
       <button class="card-head" aria-expanded="false" aria-controls="d-trade">
         <h4>TradeWatch</h4>
@@ -412,6 +411,6 @@
 
 </div><!-- /shell -->
 
-<script type="module" src="scene.js?v=14"></script>
+<script type="module" src="scene.js?v=15"></script>
 </body>
 </html>

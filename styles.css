@@ -202,7 +202,7 @@ html.js .card.open .detail{grid-template-rows:1fr;opacity:1}
 .detail-inner p{color:var(--muted);font-size:.93em;margin-bottom:14px}
 .detail-inner p:first-child{padding-top:18px;border-top:1px solid var(--line)}
 .detail-inner p b{color:var(--text);font-weight:500}
-.detail-inner .fine{font-size:.86em;color:var(--faint)}
+.detail-inner .fine,.station p.fine{font-size:.86em;color:var(--faint)}
 .mono-in{font-family:"IBM Plex Mono",monospace;font-size:.86em;color:var(--text)}
 @media(prefers-reduced-motion:reduce){
   html.js .detail{transition:none}
