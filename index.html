@@ -167,6 +167,36 @@
   <div class="band-head up"><span class="n">02</span><h2>Also shipped</h2></div>
   <div class="grid up">
     <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-portico">
+        <h4>Portico</h4>
+        <div class="sub">Founder · AI intake for immigration law firms · Live</div>
+        <p>A website chat that takes a new client's details in English, Spanish or French, flags a detention or a hearing next week as urgent, and books a real consultation. The model creates a lead or a booking only through tools that check its work.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-portico">
+        <div class="detail-inner">
+          <p>The assistant can only book a time the slot finder actually returned, so it
+            cannot invent one. The slot is checked again inside the booking transaction, and
+            two people racing for the same time get a <b>409 and fresh times</b>, not a double
+            booking.</p>
+          <p>A-numbers, SSNs and passport numbers are <b>masked before anything is
+            stored</b>, and the chat never asks for immigration or criminal history. Every
+            firm's data is scoped by <span class="mono-in">firm_id</span>: another firm's
+            record answers 404, as if it did not exist, and a test fails if any table drops
+            the column.</p>
+          <p>Staff can ask questions about their own records, and the answer is checked
+            against what the lookups returned before anyone sees it. A number, date or name
+            no lookup produced gets one chance to correct itself, then the answer is
+            <b>withheld rather than shown</b>.</p>
+          <p class="fine">FastAPI, Postgres and a Next.js dashboard with an embeddable widget.
+            327 tests in CI with a scripted stand-in for Claude; scripted intake evals in three
+            languages run separately against the real model. Clio and Docketwise sync is pinned
+            by contract tests, not yet proven against a live account.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://porticointake.com" target="_blank" rel="noopener">Live →</a><span class="none">Code private</span></div>
+    </article>
+    <article class="card" data-card>
       <button class="card-head" aria-expanded="false" aria-controls="d-trade">
         <h4>TradeWatch</h4>
         <div class="sub">India–US policy monitor · Live</div>
