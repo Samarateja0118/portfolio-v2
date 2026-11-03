@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="stylesheet" href="styles.css?v=17">
 <script src="js-flag.js"></script>
 </head>
 <body>
@@ -51,17 +51,23 @@
     in advance, <b>exactly how the thing fails</b>, and making that failure
     boring.
   </p>
-  <div class="foot up">
-    <a href="#work">See the work</a>
-    <a href="mailto:samarateja18@gmail.com">samarateja18@gmail.com</a>
-    <a href="https://github.com/Samarateja0118" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://www.linkedin.com/in/samarateja-reddy/" target="_blank" rel="noopener">LinkedIn</a>
+  <ul class="proof up" aria-label="Highlights">
+    <li><b>500K+</b><span>telemetry events a day through a Kafka + SQS pipeline at YuppTV</span></li>
+    <li><b>55% → 88%</b><span>integration test coverage at YuppTV, with defect recurrence down 40%</span></li>
+    <li><b>327</b><span>tests in CI on Portico, my live intake product for law firms</span></li>
+  </ul>
+  <div class="actions up">
+    <a class="btn primary" href="Samarateja_Gutta_Resume.pdf" target="_blank" rel="noopener">Resume (PDF)</a>
+    <a class="btn" href="https://github.com/Samarateja0118" target="_blank" rel="noopener">GitHub</a>
+    <a class="btn" href="https://www.linkedin.com/in/samarateja-reddy/" target="_blank" rel="noopener">LinkedIn</a>
+    <a class="btn" href="mailto:samarateja18@gmail.com">Email</a>
+    <a class="more" href="#work">See the work ↓</a>
   </div>
   <div class="scroll-hint mono">Scroll</div>
 </section>
 
 <div class="band" id="work">
-  <div class="band-head up"><span class="n">01</span><h2>Selected work — five failures, handled</h2></div>
+  <div class="band-head up"><span class="n">01</span><h2>Selected work — seven failures, handled</h2></div>
 </div>
 
 <!-- ── station 0 ─────────────────────────────────────────────────────── -->
@@ -96,7 +102,62 @@
 <!-- ── station 1 ─────────────────────────────────────────────────────── -->
 <section class="station" data-station="1">
   <div class="panel up">
-    <span class="idx">02 — Prompt injection, arriving from your own database</span>
+    <span class="idx">02 — A critical job arrives and every GPU is taken</span>
+    <h3>GPU Job Scheduler</h3>
+    <div class="sub">Go · Kubernetes · Simulated GPU cluster</div>
+    <p>A scheduler control plane for a shared GPU cluster. Jobs are packed best-fit
+      and kept on one interconnect island, priorities age so nothing starves, and
+      each team has a guaranteed quota it can borrow beyond. The GPUs are
+      simulated; the scheduler, persistence and rollout code are real and tested.</p>
+    <div class="pull">Across teams, a critical job may evict only work running on
+      <b>borrowed</b> capacity. On identical 72-hour traces over 128 simulated GPUs,
+      critical p95 queue wait fell from 142.8 to 2.9 minutes against FIFO.</div>
+    <p>The price is written down beside it. With no checkpointing, preemption throws
+      away about 9% of GPU-hours, batch jobs wait far longer, and FIFO keeps the best
+      useful utilization at full load.</p>
+    <p>State lives in Postgres and intake runs through Redis Streams, so on a
+      single-node k3s cluster <b>150 of 150 jobs finished</b> while a node agent and
+      the scheduler pod were killed. A Go canary controller rolled back releases with
+      15% errors or +400&nbsp;ms latency in 32 seconds.</p>
+    <p class="fine">Helm, Prometheus alerts, Grafana, OpenTofu and GitHub Actions with
+      a kind e2e. One scheduler replica, no leader election; the Ansible role is
+      lint-checked, not run on a real host.</p>
+    <div class="tags"><span>Go</span><span>Kubernetes</span><span>Helm</span><span>PostgreSQL</span><span>Redis Streams</span><span>Prometheus</span></div>
+    <div class="links"><a href="https://github.com/Samarateja0118/gpu-scheduler-platform" target="_blank" rel="noopener">Code →</a></div>
+  </div>
+</section>
+
+<!-- ── station 2 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="2">
+  <div class="panel up">
+    <span class="idx">03 — The right company, the wrong filing</span>
+    <h3>RAG over SEC Filings</h3>
+    <div class="sub">Retrieval evaluation · FinanceBench · CPU only</div>
+    <p>Hybrid search over 84 real SEC filings, 12,013 PDF pages: BM25 and dense
+      embeddings fused by reciprocal rank, company and year filters, and a Qwen3
+      cross-encoder reranker, scored on all 150 FinanceBench questions against the
+      labelled page.</p>
+    <div class="pull">The reranker lifts MRR@10 from 0.26 to 0.42. Even so, 28% of top
+      results come from <b>the wrong filing of the right company</b>: a 2022 10-K
+      where the answer sat in a 2023 10-Q.</div>
+    <p>Every comparison carries a paired bootstrap interval. Hybrid clearly beats BM25
+      alone, but its edge over dense-only is not significant at 150 questions, and it
+      is reported that way.</p>
+    <p>Answers come from a local 4B model: 36.7% judged correct, 78% of cited numbers
+      found verbatim in the retrieved pages, and a hand spot-check showing the LLM
+      judge <b>under-credits numbers in tables</b>.</p>
+    <p class="fine">CPU only, single-request latency on four cores; no GPU or load
+      testing. Settings were chosen on the same 150 questions, so there is no
+      held-out set yet.</p>
+    <div class="tags"><span>Python</span><span>FastAPI</span><span>BM25 + dense</span><span>Cross-encoder reranking</span><span>Redis</span><span>Docker</span></div>
+    <div class="links"><a href="https://github.com/Samarateja0118/rag-eval-system" target="_blank" rel="noopener">Code →</a></div>
+  </div>
+</section>
+
+<!-- ── station 3 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="3">
+  <div class="panel up">
+    <span class="idx">04 — Prompt injection, arriving from your own database</span>
     <h3>Access AI Gateway</h3>
     <div class="sub">LLM security · Multi-tenant backend</div>
     <p>An LLM gateway over a multi-tenant access-control system, built around
@@ -116,10 +177,10 @@
   </div>
 </section>
 
-<!-- ── station 2 ─────────────────────────────────────────────────────── -->
-<section class="station" data-station="2">
+<!-- ── station 4 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="4">
   <div class="panel up">
-    <span class="idx">03 — A node stops answering, mid-write</span>
+    <span class="idx">05 — A node stops answering, mid-write</span>
     <h3>Distributed Object Storage</h3>
     <div class="sub">S3-inspired · Java 21 · Eight services</div>
     <p>Objects are split into content-addressed chunks on a data plane; their
@@ -140,10 +201,10 @@
   </div>
 </section>
 
-<!-- ── station 3 ─────────────────────────────────────────────────────── -->
-<section class="station" data-station="3">
+<!-- ── station 5 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="5">
   <div class="panel up">
-    <span class="idx">04 — A benchmark that is secretly a memory test</span>
+    <span class="idx">06 — A benchmark that is secretly a memory test</span>
     <h3>Polymarket Forecast Benchmark</h3>
     <div class="sub">LLM evaluation · Calibration research</div>
     <p>Prediction markets label themselves: record a forecast, and weeks later
@@ -166,10 +227,10 @@
   </div>
 </section>
 
-<!-- ── station 4 ─────────────────────────────────────────────────────── -->
-<section class="station" data-station="4">
+<!-- ── station 6 ─────────────────────────────────────────────────────── -->
+<section class="station" data-station="6">
   <div class="panel up">
-    <span class="idx">05 — The model writes a reply it is not allowed to send</span>
+    <span class="idx">07 — The model writes a reply it is not allowed to send</span>
     <h3>SOP-Guided Claims Agent</h3>
     <div class="sub">LLM agent · Guardrails · Insurance</div>
     <p>A claims-support agent that must walk a fixed four-phase workflow —
@@ -196,72 +257,15 @@
   <div class="band-head up"><span class="n">02</span><h2>Also shipped</h2></div>
   <div class="grid up">
     <article class="card" data-card>
-      <button class="card-head" aria-expanded="false" aria-controls="d-gpu">
-        <h4>GPU Job Scheduler</h4>
-        <div class="sub">Go · Kubernetes · Simulated GPU cluster</div>
-        <p>A control plane that decides which job gets which GPUs: best-fit packing that keeps multi-GPU jobs on one interconnect island, priorities with aging, tenant quotas that can be borrowed and reclaimed, and preemption. The GPUs are simulated; the scheduler, persistence and rollout code are real and tested.</p>
-        <span class="cue"><i></i>Detail</span>
-      </button>
-      <div class="detail" id="d-gpu">
-        <div class="detail-inner">
-          <p>Replaying identical 72-hour traces on 128 simulated GPUs, critical-job
-            p95 queue wait fell from 142.8 to 2.9 minutes against FIFO. <b>It pays for
-            that.</b> Preemption without checkpointing throws away about 9% of
-            GPU-hours, batch jobs wait far longer, and FIFO keeps the best useful
-            utilization at full load. The write-up says so.</p>
-          <p>State lives in Postgres and is restored on restart; submissions arrive
-            through Redis Streams, at-least-once with idempotent IDs. On a single-node
-            k3s cluster, <b>150 of 150 jobs finished</b> while a node agent and then the
-            scheduler pod were killed mid-run.</p>
-          <p>A canary controller in Go checks SLOs in Prometheus at each traffic step.
-            Releases returning 15% errors or adding 400&nbsp;ms were rolled back in 32
-            seconds, on k3s and on kind in CI. Caching placement failures by job shape
-            took a full pass over 500 nodes and 5,000 pending jobs from 690&nbsp;ms to
-            5&nbsp;ms, with identical output.</p>
-          <p class="fine">Helm (HPA, PDB, NetworkPolicies, 13 alert rules, Grafana),
-            OpenTofu and GitHub Actions with a kind e2e. One scheduler replica, no
-            leader election; the Ansible role is lint-checked, not run on a real host.</p>
-        </div>
-      </div>
-      <div class="links"><a href="https://github.com/Samarateja0118/gpu-scheduler-platform" target="_blank" rel="noopener">Code →</a></div>
-    </article>
-    <article class="card" data-card>
-      <button class="card-head" aria-expanded="false" aria-controls="d-rag">
-        <h4>RAG over SEC Filings</h4>
-        <div class="sub">Retrieval evaluation · FinanceBench</div>
-        <p>Hybrid search over 84 real SEC filings, 12,013 PDF pages: BM25 and dense embeddings fused by reciprocal rank, company and year filters, and a cross-encoder reranker, scored on all 150 FinanceBench questions at page level.</p>
-        <span class="cue"><i></i>Detail</span>
-      </button>
-      <div class="detail" id="d-rag">
-        <div class="detail-inner">
-          <p>The reranker raised MRR@10 from 0.26 to 0.42 and Recall@5 from 0.34 to
-            0.54, with a paired bootstrap interval that excludes zero. Hybrid clearly
-            beat BM25 alone, but its edge over dense-only was <b>not significant at
-            150 questions</b>, and it is reported that way.</p>
-          <p><b>The biggest failure:</b> 28% of top-1 results come from the wrong
-            filing of the right company, a 2022 10-K where the answer was in a 2023
-            10-Q. A year-aware filter helps (MRR 0.26 to 0.30); the rest is the next
-            problem to solve.</p>
-          <p>Answers come from a local 4B model: 36.7% judged correct, 78% of cited
-            numbers found verbatim in the retrieved pages, and a hand spot-check that
-            showed the LLM judge under-credits numbers in tables. A Redis cache keyed
-            on the index fingerprint turns a 58-second cold answer into 0.36&nbsp;ms.</p>
-          <p class="fine">CPU only, single-request latency on four cores; no GPU or load
-            testing. Settings were chosen on the same 150 questions, so there is no
-            held-out set yet.</p>
-        </div>
-      </div>
-      <div class="links"><a href="https://github.com/Samarateja0118/rag-eval-system" target="_blank" rel="noopener">Code →</a></div>
-    </article>
-    <article class="card" data-card>
       <button class="card-head" aria-expanded="false" aria-controls="d-mlb">
         <h4>MLB Projections Pipeline</h4>
         <div class="sub">Bayesian modeling · MLflow · MLOps</div>
-        <p>Hierarchical Bayesian player-rate projections in PyMC, ported to Stan with the baselines replicated in R, then operated over time: an MLflow registry, a champion/challenger gate, scheduled retrains and drift monitoring.</p>
+        <p class="one">Bayesian player projections, retrained and monitored like a production model.</p>
         <span class="cue"><i></i>Detail</span>
       </button>
       <div class="detail" id="d-mlb">
         <div class="detail-inner">
+          <p>Hierarchical Bayesian player-rate projections in PyMC, ported to Stan with the baselines replicated in R, then operated over time: an MLflow registry, a champion/challenger gate, scheduled retrains and drift monitoring.</p>
           <p>Backtested on 2023–2025, the Bayesian model beats Marcel on hitter
             strikeout rate with an interval that excludes zero, ties on walks, and is
             <b>slightly worse</b> on home runs and pitcher strikeouts, because it
@@ -286,11 +290,12 @@
       <button class="card-head" aria-expanded="false" aria-controls="d-trade">
         <h4>TradeWatch</h4>
         <div class="sub">India–US policy monitor · Live</div>
-        <p>A daily briefing agent over the Federal Register, USTR, Commerce and PIB feeds. A deterministic prefilter requiring two <em>distinct</em> trade or tech concepts drops routine notices at zero marginal cost; survivors go to a model.</p>
+        <p class="one">Daily trade-policy briefings from four government feeds, with a free filter in front of the model.</p>
         <span class="cue"><i></i>Detail</span>
       </button>
       <div class="detail" id="d-trade">
         <div class="detail-inner">
+          <p>A daily briefing agent over the Federal Register, USTR, Commerce and PIB feeds. A deterministic prefilter requiring two <em>distinct</em> trade or tech concepts drops routine notices at zero marginal cost; survivors go to a model.</p>
           <p>The real design problem is that a language model is an unreliable
             component inside a pipeline that has to be dependable, so every stage
             degrades instead of failing. Malformed API records are skipped. A source
@@ -311,11 +316,12 @@
       <button class="card-head" aria-expanded="false" aria-controls="d-mgnrega">
         <h4>Rural Development Transparency</h4>
         <div class="sub">MGNREGA · Data engineering · In progress</div>
-        <p>India's public-works disclosures turned auditable — district to block to gram panchayat, every response archived and hashed so any number walks back to its page.</p>
+        <p class="one">India's public-works spending made auditable, down to the village.</p>
         <span class="cue"><i></i>Detail</span>
       </button>
       <div class="detail" id="d-mgnrega">
         <div class="detail-inner">
+          <p>India's public-works disclosures turned auditable — district to block to gram panchayat, every response archived and hashed so any number walks back to its page.</p>
           <p><b>Fetching.</b> Rate limited to six requests a minute per host, with retry
             and backoff, and every raw response archived beside its SHA-256. The source
             allow-list is enforced by a <b>database trigger at write time</b>, so a
@@ -348,11 +354,12 @@
       <button class="card-head" aria-expanded="false" aria-controls="d-movie">
         <h4>Movie Catalog Service</h4>
         <div class="sub">MCP + HTTP · Async Python</div>
-        <p>One domain layer behind two independent transports — an MCP server for assistants and an HTTP API for the demo — so caching, retries and failure behaviour are identical whichever door a caller comes through.</p>
+        <p class="one">One movie-catalog core served over both MCP and HTTP, failing the same way through either.</p>
         <span class="cue"><i></i>Detail</span>
       </button>
       <div class="detail" id="d-movie">
         <div class="detail-inner">
+          <p>One domain layer behind two independent transports — an MCP server for assistants and an HTTP API for the demo — so caching, retries and failure behaviour are identical whichever door a caller comes through.</p>
           <p>Dependencies point one way only: the domain layer knows nothing about HTTP,
             and the transport layer knows nothing about movies. That is what makes the two
             front doors cheap — a second transport is a new adapter, not a second copy of
@@ -369,11 +376,12 @@
       <button class="card-head" aria-expanded="false" aria-controls="d-cap">
         <h4>CAP Sleep Microstructure</h4>
         <div class="sub">ML research · EEG · In progress</div>
-        <p>Detecting cyclic alternating pattern phases in overnight EEG — the microstructure beneath conventional sleep staging, which shifts in conditions where a standard hypnogram still looks normal.</p>
+        <p class="one">Finding sleep microstructure in overnight EEG, measured against a baseline that is hard to beat.</p>
         <span class="cue"><i></i>Detail</span>
       </button>
       <div class="detail" id="d-cap">
         <div class="detail-inner">
+          <p>Detecting cyclic alternating pattern phases in overnight EEG — the microstructure beneath conventional sleep staging, which shifts in conditions where a standard hypnogram still looks normal.</p>
           <p>Recordings are read from EDF with MNE, windowed, and turned into spectral and
             entropy features feeding an LSTM over sequence windows — so the temporal context
             around a candidate phase is available, rather than each window being judged
@@ -393,11 +401,12 @@
       <button class="card-head" aria-expanded="false" aria-controls="d-agent">
         <h4>AI Data Agent</h4>
         <div class="sub">LLM planner · Pandas · Live</div>
-        <p>Plain-English questions against a CSV — the model emits a schema-validated query plan rather than code, and pandas executes it.</p>
+        <p class="one">Ask a CSV questions in plain English; the model writes a checked plan, never code.</p>
         <span class="cue"><i></i>Detail</span>
       </button>
       <div class="detail" id="d-agent">
         <div class="detail-inner">
+          <p>Plain-English questions against a CSV — the model emits a schema-validated query plan rather than code, and pandas executes it.</p>
           <p>The planner never writes code. It emits a structured filter / aggregate /
             group-by plan, and a guardrail layer checks that plan against the dataset's
             <b>real columns</b> before anything runs — rejecting or self-correcting whatever
@@ -415,7 +424,7 @@
       <button class="card-head" aria-expanded="false" aria-controls="d-resume">
         <h4>Resume Tailor AI</h4>
         <div class="sub">Full-stack · LLM pipeline</div>
-        <p>Parses an unstructured PDF resume through a multi-step LLM pipeline and rewrites it for a target role.</p>
+        <p class="one">Rewrites a PDF resume for a target role through a staged LLM pipeline.</p>
         <span class="cue"><i></i>Detail</span>
       </button>
       <div class="detail" id="d-resume">
@@ -441,31 +450,45 @@
     <div class="entry">
       <div class="when">Jun 2023 – Aug 2024<br>Hyderabad, India</div>
       <div>
-        <div class="role">Software &amp; Data Engineering Intern</div>
-        <div class="org">YuppTV</div>
-        <p>Built and shipped a full-stack analytics dashboard on AWS serving
-          10,000+ users, cutting manual reporting effort by 30%. Wrote the Python
-          and SQL behind it, and designed the data/API layer so non-technical
-          teams could answer their own questions instead of filing a request.</p>
+        <div class="role">Software Engineer</div>
+        <div class="org">YuppTV · OTT video streaming</div>
+        <ul class="pts">
+          <li>Built an event-driven pipeline with Apache Kafka and Amazon SQS across
+            microservices, ingesting <b>500,000+ telemetry events a day</b> with
+            fault-tolerant delivery and no message loss.</li>
+          <li>Built CI/CD integration test suites with Docker, Testcontainers and GitHub
+            Actions, taking coverage from <b>55% to 88%</b> and cutting production defect
+            recurrence by 40%.</li>
+          <li>Shared on-call for a platform serving 10,000+ daily active users, triaging
+            from CloudWatch dashboards, logs and latency and error-budget alarms through to
+            root cause and fix.</li>
+          <li>Removed query bottlenecks on core high-volume tables with a two-tier data
+            access layer and tuned SQL (CTEs, indexing, window functions).</li>
+        </ul>
       </div>
     </div>
     <div class="entry">
-      <div class="when">Jun – Aug 2022<br>Remote / Singapore</div>
+      <div class="when">Jun – Aug 2022<br>Singapore</div>
       <div>
-        <div class="role">Data &amp; ML Engineering Intern</div>
+        <div class="role">Software Engineering Intern</div>
         <div class="org">Hewlett Packard × National University of Singapore</div>
-        <p>ETL pipelines in Python and SQL — ingestion, cleaning, validation,
-          transformation. Audited datasets for quality issues, diagnosed root
-          causes and shipped the fixes. Classification and regression models in
-          scikit-learn with iterative evaluation and tuning.</p>
+        <ul class="pts">
+          <li>Wrote SQL ETL pipelines over 10+ disparate datasets, standardizing schemas
+            across 2M+ records.</li>
+          <li>Built automated data validation with schema contracts, so bad raw data was
+            caught before it reached model ingestion.</li>
+          <li>Trained and evaluated baseline scikit-learn models to find the key feature
+            correlations.</li>
+        </ul>
       </div>
     </div>
     <div class="entry">
-      <div class="when">Aug 2024 – May 2026</div>
+      <div class="when">Aug 2024 – May 2026<br>Washington, D.C.</div>
       <div>
-        <div class="role">M.S., Computer Science</div>
+        <div class="role">M.S., Computer Science · Machine Intelligence &amp; Cognition</div>
         <div class="org">The George Washington University · Washington, D.C.</div>
-        <p>GPA 3.50 / 4.00.</p>
+        <p>Graduated May 2026. Distributed Systems, Machine Learning, Database Systems,
+          Cloud Computing, Advanced Algorithms.</p>
       </div>
     </div>
     <div class="entry">
@@ -498,6 +521,6 @@
 
 </div><!-- /shell -->
 
-<script type="module" src="scene.js?v=15"></script>
+<script type="module" src="scene.js?v=17"></script>
 </body>
 </html>

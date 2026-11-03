@@ -14,12 +14,14 @@ Nothing decorative is ever allowed to use it.
 
 ## The scene
 
-One `three.js` scene, five stations, one camera riding the scroll. Each station
+One `three.js` scene, seven stations, one camera riding the scroll. Each station
 is that project's actual failure mode, running live:
 
 | Station | Shows |
 |---|---|
 | Portico | A week of consultation slots; two clients race for one, the second is refused at the slot (the 409) and lands on a fresh time. The calendar tilts toward the pointer on desktop |
+| GPU Job Scheduler | Four simulated 8-GPU nodes split into interconnect islands; jobs pack best-fit, and a critical job evicts only borrowed work, which is thrown away (no checkpointing) |
+| RAG over SEC Filings | A corpus cloud; hybrid search pulls a shortlist, the reranker reorders it, and about one time in four the top spot goes to the right company's wrong filing |
 | Access AI Gateway | Records streaming at a boundary; the one carrying an instruction is caught *at* the gate, not downstream |
 | Distributed Object Storage | Chunks scored against five nodes by rendezvous hashing; a node drops and the write walks down the ranking |
 | Polymarket Forecast Benchmark | Forecasts against the diagonal of perfect calibration, settling onto a bowed, overconfident curve |
