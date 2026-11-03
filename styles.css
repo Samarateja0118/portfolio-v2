@@ -176,6 +176,8 @@ dialog.card-modal .detail{grid-template-rows:1fr !important;opacity:1 !important
 .grid .sub{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
   letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
 .grid p{color:var(--muted);font-size:0.94em;margin-bottom:18px}
+/* An odd card count would leave the last row with an empty, line-coloured cell. */
+.grid article:last-child:nth-child(odd){grid-column:1/-1}
 @media(max-width:760px){.grid{grid-template-columns:1fr}}
 
 /* Expandable cards. The detail is in the markup expanded; JS collapses it on

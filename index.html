@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=16">
 <script src="js-flag.js"></script>
 </head>
 <body>
@@ -195,6 +195,93 @@
 <div class="band" id="more">
   <div class="band-head up"><span class="n">02</span><h2>Also shipped</h2></div>
   <div class="grid up">
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-gpu">
+        <h4>GPU Job Scheduler</h4>
+        <div class="sub">Go · Kubernetes · Simulated GPU cluster</div>
+        <p>A control plane that decides which job gets which GPUs: best-fit packing that keeps multi-GPU jobs on one interconnect island, priorities with aging, tenant quotas that can be borrowed and reclaimed, and preemption. The GPUs are simulated; the scheduler, persistence and rollout code are real and tested.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-gpu">
+        <div class="detail-inner">
+          <p>Replaying identical 72-hour traces on 128 simulated GPUs, critical-job
+            p95 queue wait fell from 142.8 to 2.9 minutes against FIFO. <b>It pays for
+            that.</b> Preemption without checkpointing throws away about 9% of
+            GPU-hours, batch jobs wait far longer, and FIFO keeps the best useful
+            utilization at full load. The write-up says so.</p>
+          <p>State lives in Postgres and is restored on restart; submissions arrive
+            through Redis Streams, at-least-once with idempotent IDs. On a single-node
+            k3s cluster, <b>150 of 150 jobs finished</b> while a node agent and then the
+            scheduler pod were killed mid-run.</p>
+          <p>A canary controller in Go checks SLOs in Prometheus at each traffic step.
+            Releases returning 15% errors or adding 400&nbsp;ms were rolled back in 32
+            seconds, on k3s and on kind in CI. Caching placement failures by job shape
+            took a full pass over 500 nodes and 5,000 pending jobs from 690&nbsp;ms to
+            5&nbsp;ms, with identical output.</p>
+          <p class="fine">Helm (HPA, PDB, NetworkPolicies, 13 alert rules, Grafana),
+            OpenTofu and GitHub Actions with a kind e2e. One scheduler replica, no
+            leader election; the Ansible role is lint-checked, not run on a real host.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/Samarateja0118/gpu-scheduler-platform" target="_blank" rel="noopener">Code →</a></div>
+    </article>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-rag">
+        <h4>RAG over SEC Filings</h4>
+        <div class="sub">Retrieval evaluation · FinanceBench</div>
+        <p>Hybrid search over 84 real SEC filings, 12,013 PDF pages: BM25 and dense embeddings fused by reciprocal rank, company and year filters, and a cross-encoder reranker, scored on all 150 FinanceBench questions at page level.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-rag">
+        <div class="detail-inner">
+          <p>The reranker raised MRR@10 from 0.26 to 0.42 and Recall@5 from 0.34 to
+            0.54, with a paired bootstrap interval that excludes zero. Hybrid clearly
+            beat BM25 alone, but its edge over dense-only was <b>not significant at
+            150 questions</b>, and it is reported that way.</p>
+          <p><b>The biggest failure:</b> 28% of top-1 results come from the wrong
+            filing of the right company, a 2022 10-K where the answer was in a 2023
+            10-Q. A year-aware filter helps (MRR 0.26 to 0.30); the rest is the next
+            problem to solve.</p>
+          <p>Answers come from a local 4B model: 36.7% judged correct, 78% of cited
+            numbers found verbatim in the retrieved pages, and a hand spot-check that
+            showed the LLM judge under-credits numbers in tables. A Redis cache keyed
+            on the index fingerprint turns a 58-second cold answer into 0.36&nbsp;ms.</p>
+          <p class="fine">CPU only, single-request latency on four cores; no GPU or load
+            testing. Settings were chosen on the same 150 questions, so there is no
+            held-out set yet.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/Samarateja0118/rag-eval-system" target="_blank" rel="noopener">Code →</a></div>
+    </article>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-mlb">
+        <h4>MLB Projections Pipeline</h4>
+        <div class="sub">Bayesian modeling · MLflow · MLOps</div>
+        <p>Hierarchical Bayesian player-rate projections in PyMC, ported to Stan with the baselines replicated in R, then operated over time: an MLflow registry, a champion/challenger gate, scheduled retrains and drift monitoring.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-mlb">
+        <div class="detail-inner">
+          <p>Backtested on 2023–2025, the Bayesian model beats Marcel on hitter
+            strikeout rate with an interval that excludes zero, ties on walks, and is
+            <b>slightly worse</b> on home runs and pitcher strikeouts, because it
+            shrinks the most extreme players too little. It beats league average
+            everywhere.</p>
+          <p>The pipeline replays 2012–2025 as if each season had just been released:
+            56 retrains, each candidate scored on the season it never saw. The gate
+            switches model type only when a paired bootstrap says the challenger is
+            better, so it does not flip on noise.</p>
+          <p><b>It caught the 60-game 2020 season on its own.</b> Median hitter playing
+            time fell 51%, the volume-shift alert fired on all four stats, and the gate
+            moved hitter strikeout rate to Marcel, then back once the 2022 holdout
+            favoured the fitted model.</p>
+          <p class="fine">Runs locally and in GitHub Actions on Lahman data. The
+            Databricks Asset Bundle is written but not yet deployed to a live
+            workspace.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/Samarateja0118/mlb-player-projections" target="_blank" rel="noopener">Model →</a><a href="https://github.com/Samarateja0118/mlb-mlops-pipeline" target="_blank" rel="noopener">Pipeline →</a></div>
+    </article>
     <article class="card" data-card>
       <button class="card-head" aria-expanded="false" aria-controls="d-trade">
         <h4>TradeWatch</h4>
