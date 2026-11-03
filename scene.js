@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   One WebGL scene, five stations, one idea: every station shows something
+   One WebGL scene, seven stations, one idea: every station shows something
    going wrong and the system absorbing it. Colour is the grammar — the whole
    scene is bone-white until something fails, and only then is it warm.
 
@@ -310,10 +310,235 @@ async function build() {
     };
   }
 
-  /* ── 01 · Access AI Gateway ──────────────────────────────────────────
+  /* ── 01 · GPU Job Scheduler ──────────────────────────────────────────
+     Four nodes of eight GPUs, each split into two interconnect islands.
+     Jobs are packed best-fit into the tightest window that holds them and
+     never straddle an island. Dimmer jobs run on borrowed quota. When a
+     critical job finds no room, it evicts only borrowed work: that work is
+     thrown away (there is no checkpointing), which is the signal colour.  */
+  const gGpu = makeStation(1);
+  {
+    const COLS = 8, ROWS = 4, CW = 0.6, RH = 0.86, ISLAND = 4, ISO_GAP = 0.22;
+    const rack = new THREE.Group();
+    rack.rotation.set(-0.22, 0.26, 0);
+    gGpu.add(rack);
+    const xOf = (c) => (c - (COLS - 1) / 2) * CW + (c >= ISLAND ? ISO_GAP / 2 : -ISO_GAP / 2);
+    const yOf = (r) => ((ROWS - 1) / 2 - r) * RH;
+    const cellGeo = new THREE.BoxGeometry(CW - 0.1, RH - 0.22, 0.04);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const m = new THREE.Mesh(cellGeo, mat(0x15151B, { emissive: WHITE, emissiveIntensity: 0.02 }));
+        m.position.set(xOf(c), yOf(r), 0);
+        rack.add(m);
+      }
+      for (const half of [0, 1]) {
+        const w = ISLAND * CW + 0.02;
+        const frame = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(w, RH - 0.1)), lineMat(WHITE, 0.12));
+        frame.position.set((xOf(half * ISLAND) + xOf(half * ISLAND + ISLAND - 1)) / 2, yOf(r), 0);
+        rack.add(frame);
+      }
+    }
+    const geos = {};
+    const geoFor = (w) => geos[w] || (geos[w] = new THREE.BoxGeometry(w * CW - 0.12, RH - 0.3, 0.22));
+    const occ = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    const jobs = [];
+    const SPAWN = new THREE.Vector3(-0.4, 2.7, 0.5);
+
+    // Contiguous windows of width w inside one island, with the cells they cover.
+    const windows = (w) => {
+      const out = [];
+      for (let r = 0; r < ROWS; r++) for (let base = 0; base < COLS; base += ISLAND)
+        for (let c = base; c + w <= base + ISLAND; c++) out.push({ r, c });
+      return out;
+    };
+    const freeRun = (r, c) => {                       // free cells around a window, for best-fit
+      let a = c, b = c;
+      const base = c < ISLAND ? 0 : ISLAND;
+      while (a - 1 >= base && !occ[r][a - 1]) a--;
+      while (b + 1 < base + ISLAND && !occ[r][b + 1]) b++;
+      return b - a + 1;
+    };
+    const place = (job, r, c) => {
+      job.r = r; job.c = c;
+      for (let k = 0; k < job.w; k++) occ[r][c + k] = job;
+      job.state = 'fly'; job.t = 0;
+      job.from.copy(SPAWN).add(new THREE.Vector3((Math.random() - 0.5) * 2, 0, 0));
+      job.to.set(xOf(c) + (xOf(c + job.w - 1) - xOf(c)) / 2, yOf(r), 0.14);
+      job.mesh.position.copy(job.from);
+    };
+    const release = (job) => { for (let k = 0; k < job.w; k++) if (occ[job.r][job.c + k] === job) occ[job.r][job.c + k] = null; };
+    const makeJob = (w, kind) => {
+      // critical work is the brightest thing on the rack; borrowed is the dimmest
+      const color = kind === 'critical' ? WHITE : (kind === 'borrowed' ? 0x4A4A55 : 0x8E8E99);
+      const glow = kind === 'critical' ? 0.6 : (kind === 'borrowed' ? 0.02 : 0.08);
+      const mesh = new THREE.Mesh(geoFor(w), mat(color, { emissive: WHITE, emissiveIntensity: glow }));
+      rack.add(mesh);
+      const job = { mesh, w, kind, state: 'new', t: 0, life: 0, r: 0, c: 0,
+        from: new THREE.Vector3(), to: new THREE.Vector3() };
+      job.life = kind === 'critical' ? 6 + Math.random() * 2 : 4 + Math.random() * 6;
+      jobs.push(job);
+      return job;
+    };
+    const drop = (job) => { rack.remove(job.mesh); job.mesh.material.dispose(); jobs.splice(jobs.indexOf(job), 1); };
+
+    const arrive = () => {
+      const w = [1, 1, 2, 2, 2, 4][Math.floor(Math.random() * 6)];
+      let best = null, bestRun = Infinity;
+      for (const win of windows(w)) {
+        let ok = true;
+        for (let k = 0; k < w; k++) if (occ[win.r][win.c + k]) { ok = false; break; }
+        if (!ok) continue;
+        const run = freeRun(win.r, win.c);
+        if (run < bestRun) { bestRun = run; best = win; }    // tightest hole that fits
+      }
+      if (!best) return;                                   // stays queued; nothing drawn
+      place(makeJob(w, Math.random() < 0.45 ? 'borrowed' : 'owned'), best.r, best.c);
+    };
+    const critical = () => {
+      const w = 4;
+      let best = null, cost = Infinity;
+      for (const win of windows(w)) {
+        const victims = new Set();
+        let ok = true;
+        for (let k = 0; k < w; k++) {
+          const j = occ[win.r][win.c + k];
+          if (!j) continue;
+          if (j.kind !== 'borrowed' || j.state === 'fly') { ok = false; break; }
+          victims.add(j);
+        }
+        if (!ok) continue;
+        let lost = 0; victims.forEach(v => { lost += v.w; });
+        if (lost < cost) { cost = lost; best = { ...win, victims }; }
+      }
+      if (!best) return;
+      best.victims.forEach((v) => {                        // preempted: its work is lost
+        release(v);
+        v.state = 'evict'; v.t = 0; v.from.copy(v.mesh.position);
+        v.mesh.material.color.setHex(SIGNAL);
+        v.mesh.material.emissive.setHex(SIGNAL);
+        v.mesh.material.emissiveIntensity = 0.6;
+      });
+      place(makeJob(w, 'critical'), best.r, best.c);
+    };
+
+    for (let i = 0; i < 14; i++) arrive();
+    jobs.forEach(j => { j.state = 'run'; j.mesh.position.copy(j.to); j.life *= Math.random(); });
+    let arriveT = 0.3, critT = 2.5;
+    const pointer = { x: 0, y: 0 };
+    if (!mobile) addEventListener('pointermove', (e) => {
+      pointer.x = e.clientX / innerWidth * 2 - 1; pointer.y = e.clientY / innerHeight * 2 - 1;
+    }, { passive: true });
+
+    gGpu.userData.step = (dt) => {
+      rack.rotation.y += ((0.26 + pointer.x * 0.18) - rack.rotation.y) * Math.min(1, dt * 3);
+      rack.rotation.x += ((-0.22 + pointer.y * 0.12) - rack.rotation.x) * Math.min(1, dt * 3);
+      arriveT -= dt; critT -= dt;
+      if (arriveT <= 0) { arrive(); arriveT = 0.45 + Math.random() * 0.4; }
+      if (critT <= 0) { critical(); critT = 4.2 + Math.random() * 2; }
+      for (const j of [...jobs]) {
+        j.t += dt;
+        if (j.state === 'fly') {
+          const q = Math.min(j.t / 0.75, 1);
+          const e = q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+          j.mesh.position.lerpVectors(j.from, j.to, e);
+          j.mesh.position.z += Math.sin(q * Math.PI) * 0.5;
+          if (q >= 1) { j.state = 'run'; j.t = 0; }
+        } else if (j.state === 'run') {
+          if (j.t > j.life) { release(j); j.state = 'done'; j.t = 0; }
+        } else if (j.state === 'done') {
+          j.mesh.scale.setScalar(Math.max(0.001, 1 - j.t * 2.5));
+          if (j.t > 0.4) drop(j);
+        } else if (j.state === 'evict') {
+          j.mesh.position.set(j.from.x, j.from.y - j.t * 1.6, j.from.z + j.t * 1.2);
+          j.mesh.rotation.z = j.t * 0.6;
+          j.mesh.scale.setScalar(Math.max(0.001, 1 - j.t * 0.9));
+          if (j.t > 1.05) drop(j);
+        }
+      }
+    };
+  }
+
+  /* ── 02 · RAG over SEC filings ───────────────────────────────────────
+     A corpus of passages; hybrid search pulls a shortlist, then the reranker
+     reorders it and the labelled page climbs to the top. About one time in
+     four the top spot goes to the right company's wrong filing instead —
+     the system's biggest measured failure — and that one is warm.         */
+  const gRag = makeStation(2);
+  {
+    const N = mobile ? 90 : 150;
+    const pos = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      pos[i * 3] = -3.3 + Math.random() * 2.7;
+      pos[i * 3 + 1] = -1.9 + Math.random() * 3.8;
+      pos[i * 3 + 2] = -1.2 + Math.random() * 2.4;
+    }
+    const cloudGeo = new THREE.BufferGeometry();
+    cloudGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    gRag.add(new THREE.Points(cloudGeo, new THREE.PointsMaterial({ color: WHITE, size: 0.07, transparent: true, opacity: 0.32 })));
+
+    const K = 8, TOP = 1.55, STEP = 0.44, X0 = 0.35;
+    gRag.add(seg(new THREE.Vector3(X0 - 0.15, TOP + 0.3, 0), new THREE.Vector3(X0 - 0.15, TOP - (K - 1) * STEP - 0.3, 0), lineMat(WHITE, 0.25)));
+    const barGeo = new THREE.BoxGeometry(1, 0.17, 0.17);
+    const bars = Array.from({ length: K }, () => {
+      const m = new THREE.Mesh(barGeo, mat(DIM, { emissive: WHITE, emissiveIntensity: 0.05 }));
+      m.visible = false; gRag.add(m);
+      return { mesh: m, from: new THREE.Vector3(), y0: 0, y1: 0, len: 1, role: 'other' };
+    });
+    const lenOf = (rank) => 2.7 - rank * 0.2;          // score, longest at the top
+    const yOf = (rank) => TOP - rank * STEP;
+    const tint = (b, hex, glow) => { b.mesh.material.color.setHex(hex); b.mesh.material.emissive.setHex(hex === SIGNAL ? SIGNAL : WHITE); b.mesh.material.emissiveIntensity = glow; };
+
+    let t = 99;
+    const cycle = () => {
+      t = 0;
+      const order = [...Array(K).keys()];               // retrieval order = bar index
+      const goldAt = 3 + Math.floor(Math.random() * 4);
+      const miss = Math.random() < 0.28;
+      const wrongAt = miss ? (goldAt === 1 ? 2 : 1) : -1;
+      // reranked order: gold first, unless the wrong filing wins this time
+      const rest = order.filter(i => i !== goldAt && i !== wrongAt).sort(() => Math.random() - 0.5);
+      const newOrder = miss ? [wrongAt, goldAt, ...rest] : [goldAt, ...rest];
+      bars.forEach((b, i) => {
+        const p = Math.floor(Math.random() * N);
+        b.from.set(pos[p * 3], pos[p * 3 + 1], pos[p * 3 + 2]);
+        b.y0 = yOf(i); b.y1 = yOf(newOrder.indexOf(i));
+        b.len = lenOf(i); b.len1 = lenOf(newOrder.indexOf(i));
+        b.role = i === goldAt ? 'gold' : (i === wrongAt ? 'wrong' : 'other');
+        b.mesh.visible = true; b.mesh.scale.set(0.05, 1, 1); b.mesh.position.copy(b.from);
+        tint(b, DIM, 0.05);
+      });
+    };
+    gRag.userData.step = (dt) => {
+      t += dt;
+      if (t > 7) cycle();
+      bars.forEach((b, i) => {
+        if (!b.mesh.visible) return;
+        const m = b.mesh;
+        const fly = Math.min(Math.max((t - i * 0.08) / 0.9, 0), 1);    // retrieval: passages arrive
+        const re = Math.min(Math.max((t - 2.0) / 1.0, 0), 1);           // rerank: they reorder
+        const ef = fly < 0.5 ? 2 * fly * fly : 1 - Math.pow(-2 * fly + 2, 2) / 2;
+        const er = re < 0.5 ? 2 * re * re : 1 - Math.pow(-2 * re + 2, 2) / 2;
+        const len = b.len + (b.len1 - b.len) * er;
+        const y = b.y0 + (b.y1 - b.y0) * er;
+        m.scale.x = 0.05 + (len - 0.05) * ef;
+        m.position.set(
+          b.from.x + (X0 + len / 2 - b.from.x) * ef,
+          b.from.y + (y - b.from.y) * ef,
+          b.from.z * (1 - ef) + Math.sin(er * Math.PI) * (b.role === 'other' ? 0.2 : 0.7));
+        if (re > 0.6) {
+          if (b.role === 'gold') tint(b, WHITE, 0.5);
+          else if (b.role === 'wrong') tint(b, SIGNAL, 0.55);
+        }
+        if (t > 5.9) m.scale.y = m.scale.z = Math.max(0.001, 1 - (t - 5.9) / 0.8);
+        else m.scale.y = m.scale.z = 1;
+      });
+    };
+  }
+
+  /* ── 03 · Access AI Gateway ──────────────────────────────────────────
      Records stream toward a gate. Most pass. One carries an instruction it
      should not, and is caught at the boundary rather than downstream.      */
-  const g1 = makeStation(1);
+  const g1 = makeStation(3);
   {
     const gate = new THREE.Mesh(new THREE.PlaneGeometry(7, 5),
       new THREE.MeshBasicMaterial({ color: WHITE, transparent: true, opacity: 0.045, side: THREE.DoubleSide }));
@@ -356,10 +581,10 @@ async function build() {
     };
   }
 
-  /* ── 02 · Distributed Object Storage ─────────────────────────────────
+  /* ── 04 · Distributed Object Storage ─────────────────────────────────
      Chunks scored against every node, placed on the winner — and when a
      node stops answering, the write walks down the ranking instead.       */
-  const g2 = makeStation(2);
+  const g2 = makeStation(4);
   {
     const N = 5, GAP = 2.05;
     const nodes = [];
@@ -447,10 +672,10 @@ async function build() {
     };
   }
 
-  /* ── 03 · pmbench ────────────────────────────────────────────────────
+  /* ── 05 · pmbench ────────────────────────────────────────────────────
      Forecasts against the diagonal of perfect calibration. They settle
      onto a bowed curve — confident, and wrong about being confident.      */
-  const g3 = makeStation(3);
+  const g3 = makeStation(5);
   {
     const S = 4.4;
     g3.add(seg(new THREE.Vector3(-S / 2, -S / 2, 0), new THREE.Vector3(S / 2, S / 2, 0), lineMat(WHITE, 0.35)));
@@ -487,10 +712,10 @@ async function build() {
     };
   }
 
-  /* ── 04 · SOP-guided agent ───────────────────────────────────────────
+  /* ── 06 · SOP-guided agent ───────────────────────────────────────────
      Four gates in fixed order. A reply that breaks one is discarded and
      replaced by a computed line — the workflow never skips a phase.       */
-  const g4 = makeStation(4);
+  const g4 = makeStation(6);
   {
     const PH = 4, GAP = 2.4;
     const gates = [];
@@ -538,7 +763,7 @@ async function build() {
     };
   }
 
-  stations.push(g0, g1, g2, g3, g4);
+  stations.push(g0, gGpu, gRag, g1, g2, g3, g4);
 
   /* ── camera rides the scroll through the stations ──────────────────── */
   const keyEls = [document.querySelector('.hero'), ...document.querySelectorAll('.station')];
@@ -553,17 +778,21 @@ async function build() {
   const anchors = mobile ? [
     { p: new THREE.Vector3(0, 0.9, 15.5), l: new THREE.Vector3(0, 0.2, 0) },   // hero
     { p: new THREE.Vector3(0, 0.8, 13.0), l: new THREE.Vector3(0, 0.0, 0) },   // 00 — Portico calendar
-    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 01 — gate, widest record spread
-    { p: new THREE.Vector3(0, 1.3, 14.5), l: new THREE.Vector3(0,-0.1, 0) },   // 02 — five storage nodes
-    { p: new THREE.Vector3(0, 0.3, 11.0), l: new THREE.Vector3(0, 0.0, 0) },   // 03 — small calibration plot
-    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 04 — four phase gates
+    { p: new THREE.Vector3(0, 0.8, 14.0), l: new THREE.Vector3(0, 0.1, 0) },   // 01 — GPU rack
+    { p: new THREE.Vector3(0, 0.5, 13.5), l: new THREE.Vector3(-0.4, 0.0, 0) }, // 02 — corpus and ranked list
+    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 03 — gate, widest record spread
+    { p: new THREE.Vector3(0, 1.3, 14.5), l: new THREE.Vector3(0,-0.1, 0) },   // 04 — five storage nodes
+    { p: new THREE.Vector3(0, 0.3, 11.0), l: new THREE.Vector3(0, 0.0, 0) },   // 05 — small calibration plot
+    { p: new THREE.Vector3(0, 0.4, 14.5), l: new THREE.Vector3(0, 0.0, 0) },   // 06 — four phase gates
   ] : [
     { p: new THREE.Vector3(-1.7, 1.3, 13.5), l: new THREE.Vector3(-2.8, 0.3, 0) },  // hero — text left,  scene right
     { p: new THREE.Vector3( 2.0, 1.0, 13.5), l: new THREE.Vector3( 3.4, 0.1, 0) },  // 00   — panel right, scene left
-    { p: new THREE.Vector3(-1.7, 0.7,  9.0), l: new THREE.Vector3(-2.8, 0.1, 0) },  // 01   — panel left,  scene right
-    { p: new THREE.Vector3( 1.4, 2.0, 13.0), l: new THREE.Vector3( 2.2,-0.2, 0) },  // 02   — panel right, scene left
-    { p: new THREE.Vector3(-1.7, 0.5,  8.8), l: new THREE.Vector3(-2.8, 0.0, 0) },  // 03   — panel left,  scene right
-    { p: new THREE.Vector3( 1.9, 0.7, 14.0), l: new THREE.Vector3( 3.0, 0.0, 0) },  // 04   — panel right, scene left (all four gates)
+    { p: new THREE.Vector3(-1.9, 1.0, 15.0), l: new THREE.Vector3(-3.3, 0.2, 0) },  // 01   — panel left,  scene right (GPU rack)
+    { p: new THREE.Vector3( 2.0, 0.8, 13.5), l: new THREE.Vector3( 3.7, 0.0, 0) },  // 02   — panel right, scene left (RAG)
+    { p: new THREE.Vector3(-1.7, 0.7,  9.0), l: new THREE.Vector3(-2.8, 0.1, 0) },  // 03   — panel left,  scene right
+    { p: new THREE.Vector3( 1.4, 2.0, 13.0), l: new THREE.Vector3( 2.2,-0.2, 0) },  // 04   — panel right, scene left
+    { p: new THREE.Vector3(-1.7, 0.5,  8.8), l: new THREE.Vector3(-2.8, 0.0, 0) },  // 05   — panel left,  scene right
+    { p: new THREE.Vector3( 1.9, 0.7, 14.0), l: new THREE.Vector3( 3.0, 0.0, 0) },  // 06   — panel right, scene left (all four gates)
   ];
   const focusOf = (el) => {
     const r = el.getBoundingClientRect();

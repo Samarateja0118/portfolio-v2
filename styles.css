@@ -81,10 +81,34 @@ header.top nav a:hover{opacity:1}
 .hero h1 em{font-style:italic}
 .hero .thesis{max-width:34em;color:var(--muted);font-size:clamp(16px,1.25vw,20px);line-height:1.55}
 .hero .thesis b{color:var(--text);font-weight:500}
-.hero .foot{margin-top:clamp(34px,6vh,64px);display:flex;gap:30px;flex-wrap:wrap;align-items:center}
-.hero .foot a{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.06em;
-  border-bottom:1px solid var(--line-strong);padding-bottom:3px;transition:border-color .25s,color .25s}
-.hero .foot a:hover{border-color:var(--text)}
+/* Proof strip: three numbers a recruiter can read in five seconds. Bone-white,
+   never --signal: nothing here is a failure. */
+.hero .proof{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);max-width:660px;margin-top:clamp(30px,5vh,52px)}
+.hero .proof li{background:var(--bg);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.hero .proof b{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(26px,2.6vw,36px);
+  line-height:1;color:var(--text)}
+.hero .proof span{font-size:13px;line-height:1.45;color:var(--muted)}
+.hero .actions{margin-top:clamp(24px,4vh,40px);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.btn{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.06em;color:var(--text);
+  border:1px solid var(--line-strong);padding:11px 16px;transition:border-color .25s,background .25s,color .25s}
+.btn:hover{border-color:var(--text)}
+.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn.primary:hover{background:transparent;color:var(--text)}
+.hero .actions .more{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.06em;
+  color:var(--muted);margin-left:8px;border-bottom:1px solid var(--line-strong);padding-bottom:3px}
+.hero .actions .more:hover{color:var(--text);border-color:var(--text)}
+@media(max-width:760px){
+  .hero .proof{grid-template-columns:1fr}
+  .hero{padding-top:92px;padding-bottom:72px}
+  .hero .proof li{flex-direction:row;align-items:baseline;gap:14px;padding:11px 14px}
+  .hero .proof b{min-width:4.6em;font-size:26px}
+  /* The scene runs under the whole hero on phones, so the buttons are opaque
+     and sit in a tidy 2 × 2 instead of a ragged wrap. */
+  .hero .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .btn{background:var(--bg);text-align:center}
+  .hero .actions .more{display:none}
+}
 .scroll-hint{position:absolute;bottom:26px;left:var(--gutter);font-family:"IBM Plex Mono",monospace;
   font-size:11px;color:var(--faint);letter-spacing:.1em}
 
@@ -176,6 +200,8 @@ dialog.card-modal .detail{grid-template-rows:1fr !important;opacity:1 !important
 .grid .sub{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--faint);
   letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
 .grid p{color:var(--muted);font-size:0.94em;margin-bottom:18px}
+/* The one-line summary is what a skimmer reads, so it reads first and brightest. */
+.grid p.one{color:var(--text);font-size:1em;line-height:1.5}
 /* An odd card count would leave the last row with an empty, line-coloured cell. */
 .grid article:last-child:nth-child(odd){grid-column:1/-1}
 @media(max-width:760px){.grid{grid-template-columns:1fr}}
@@ -220,6 +246,10 @@ html.js .card.open .detail{grid-template-rows:1fr;opacity:1}
 .entry .org{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);
   letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px}
 .entry p{color:var(--muted);font-size:.95em}
+.entry .pts{list-style:none;color:var(--muted);font-size:.95em;margin-top:10px}
+.entry .pts li{position:relative;padding-left:16px;margin-bottom:8px}
+.entry .pts li::before{content:"";position:absolute;left:0;top:.75em;width:7px;height:1px;background:var(--faint)}
+.entry .pts b{color:var(--text);font-weight:500}
 @media(max-width:760px){.entry{grid-template-columns:1fr;gap:10px}}
 
 /* ── contact ──────────────────────────────────────────────────────────── */
