@@ -257,6 +257,61 @@
   <div class="band-head up"><span class="n">02</span><h2>Also shipped</h2></div>
   <div class="grid up">
     <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-agents">
+        <h4>Multi-Agent Research Platform</h4>
+        <div class="sub">Agents · MCP · Evals</div>
+        <p class="one">A multi-agent research assistant measured against a single agent, and the single agent won.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-agents">
+        <div class="detail-inner">
+          <p>A planner, parallel tool-using workers, a synthesizer and a critic, built next to a single-agent baseline and scored on 31 research questions with ground truth computed from the GitHub and PyPI APIs.</p>
+          <p>Round one went badly: <b>64% for multi-agent against 81%</b> for the single agent. The traces showed why. Worker summaries dropped detail, version numbers were guessed, and lists got truncated. Passing raw tool evidence to the synthesizer lifted it to 94%.</p>
+          <p>The single agent then scored 100%, so multi-agent still trails at about <b>3x the tokens</b>. The gap is not significant (95% CI on the difference −0.16 to +0.07), and the honest finding is that the extra agents did not pay off here.</p>
+          <p>Around it: an MCP server over GitHub and PyPI with per-agent allowlists, call budgets, jittered retries, JSONL audit logs, and approval tied to a hash of the exact payload before any pull request is opened. A CI-triage agent runs pytest in a locked-down Docker sandbox (no network, read-only filesystem, capabilities dropped) and fixed <b>5 of 8</b> seeded bugs against 3 of 8 for a one-shot baseline.</p>
+          <p>The eval toolkit records traces with deterministic replay (62/62 replay identically), pairs checks with an LLM judge, and gates CI. A degraded prompt dropped the pass rate from 0.935 to 0.871 and the gate failed the build.</p>
+          <p class="fine">Every number is from a local Qwen3-4B model, not Claude or any hosted model. The Claude path is implemented but has not been run. The PR approval gate is a demo; no PRs were opened on other people's repos.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/Samarateja0118/agentic-research-platform" target="_blank" rel="noopener">Code →</a></div>
+    </article>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-dataplat">
+        <h4>Streaming + ELT Data Platform</h4>
+        <div class="sub">Redpanda · dbt · Airflow · Postgres</div>
+        <p class="one">Ride events streamed into Postgres with exact counts after five mid-stream crashes.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-dataplat">
+        <div class="detail-inner">
+          <p>A seeded ride-hailing simulator injects duplicates, out-of-order, late and malformed events into Redpanda. A Python consumer builds one-minute event-time windows per zone with watermarks and writes them to Postgres; dbt and an Airflow 3 DAG build the batch side.</p>
+          <p><b>The sink is effectively-once.</b> Each batch is one transaction: COPY into a temp table, dedupe into raw on event id, fold only the newly inserted rows into the windows, and store Kafka offsets and watermarks alongside. On 525,722 messages with <b>5 SIGKILLs mid-stream</b>, raw held exactly 519,489 valid events and fare totals matched to the cent.</p>
+          <p>Replacing per-message commits with COPY and one merge per batch raised throughput <b>76x</b>, from 339 to 25.8k msg/s. Produce-to-queryable latency was 136 ms p50 and 239 ms p99 at about 1,000 events/s.</p>
+          <p>dbt reconciles every closed stream window against the batch rebuild, with 25 data tests and a unit test. Those tests caught two real bugs before bad rows reached reporting tables: a missing dependency on incremental runs, and ids reused across producer restarts.</p>
+          <p class="fine">Simulated data on a single 4-vCPU machine: single-node Redpanda with no replication, Postgres as both sink and warehouse, no schema registry. Exactly-once applies to the Postgres sink only; the dead-letter topic is at-least-once.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/Samarateja0118/data-platform" target="_blank" rel="noopener">Code →</a></div>
+    </article>
+    <article class="card" data-card>
+      <button class="card-head" aria-expanded="false" aria-controls="d-fde">
+        <h4>Supply-Chain Deployment Kit</h4>
+        <div class="sub">Document extraction · Forecasting · Legacy intake</div>
+        <p class="one">Invoice extraction, demand planning and messy-data intake for a fictional retailer, scored on layouts it never saw.</p>
+        <span class="cue"><i></i>Detail</span>
+      </button>
+      <div class="detail" id="d-fde">
+        <div class="detail-inner">
+          <p>Built as if deployed at a fictional home-goods retailer. A document pipeline pulls fields from supplier PDFs with per-field confidence, runs a three-way match against the ERP purchase order, and routes anything uncertain to a FastAPI review queue.</p>
+          <p>Four held-out layouts were written <b>after the extractor was frozen</b>. Cold, it got only 25% of documents exactly right and sent 17.8% straight through, but <b>auto-approved none wrongly</b> (0 of 71). After one onboarding round on those layouts: 95.8% exact, 70.3% straight-through, still 0 wrong, and all 108 injected issues caught.</p>
+          <p>Planning runs on the real UCI Online Retail data (541,909 lines, 500 SKUs). An ensemble forecast cut WAPE 8.6% against a four-week moving average. Weeks-of-cover beat textbook safety stock, and a MILP allocation with a regional floor came out 5% cheaper than greedy, which starved a region.</p>
+          <p>Intake adapters handle a cp1252 CSV with a repeated-page bug, EBCDIC fixed-width files and a flaky REST mock, with idempotent loads and an operator runbook.</p>
+          <p class="fine">Extraction is rule-based (no LLM) on synthetic documents I generated, and I also wrote the held-out layouts. "Scanned" means OCR-style noise in text PDFs, not real OCR. One year of sales data; the DC network is invented.</p>
+        </div>
+      </div>
+      <div class="links"><a href="https://github.com/Samarateja0118/fde-supply-chain-platform" target="_blank" rel="noopener">Code →</a></div>
+    </article>
+    <article class="card" data-card>
       <button class="card-head" aria-expanded="false" aria-controls="d-mlb">
         <h4>MLB Projections Pipeline</h4>
         <div class="sub">Bayesian modeling · MLflow · MLOps</div>
